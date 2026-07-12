@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useTransitStore } from "@/lib/store";
+import { useTransitStore, useAuth } from "@/lib/store";
 import { Plus, Search, MapPin, ArrowRight } from "lucide-react";
 import { kg, shortDate, km } from "@/lib/format";
 import type { TripStatus } from "@/lib/mock-data";
@@ -18,10 +18,16 @@ const statuses: (TripStatus | "all")[] = ["all", "draft", "dispatched", "complet
 
 function TripsPage() {
   const { trips, vehicles, drivers } = useTransitStore();
+  const user = useAuth((s) => s.user);
+  const isDriver = user?.role === "driver";
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<TripStatus | "all">("all");
 
-  const rows = trips.filter((t) => (filter === "all" || t.status === filter) && (!q || `${t.code} ${t.source} ${t.destination}`.toLowerCase().includes(q.toLowerCase())));
+  const driverProfile = isDriver ? drivers.find(d => d.name === user?.name) : null;
+
+  const relevantTrips = isDriver ? trips.filter(t => t.driverId === driverProfile?.id) : trips;
+
+  const rows = relevantTrips.filter((t) => (filter === "all" || t.status === filter) && (!q || `${t.code} ${t.source} ${t.destination}`.toLowerCase().includes(q.toLowerCase())));
 
   return (
     <div>
@@ -31,7 +37,9 @@ function TripsPage() {
         actions={
           <div className="flex gap-2">
             <Link to="/trips/history" className="brutal-btn px-3 py-2 bg-card">History</Link>
-            <Link to="/trips/new"><Button className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"><Plus className="h-4 w-4 mr-1" /> New trip</Button></Link>
+            {!isDriver && (
+              <Link to="/trips/new"><Button className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"><Plus className="h-4 w-4 mr-1" /> New trip</Button></Link>
+            )}
           </div>
         }
       />

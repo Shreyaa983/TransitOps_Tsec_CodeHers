@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-r
 import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { useTransitStore } from "@/lib/store";
+import { useTransitStore, useAuth } from "@/lib/store";
 import { kg, km, money, shortDate } from "@/lib/format";
 import { ArrowLeft, MapPin, ArrowRight, Play, CheckCircle2, XCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -14,7 +14,10 @@ export const Route = createFileRoute("/_app/trips/$tripId")({
 
 function TripDetail() {
   const { tripId } = useParams({ from: "/_app/trips/$tripId" });
-  const { trips, vehicles, drivers, dispatchTrip, completeTrip, cancelTrip } = useTransitStore();
+  const { trips, vehicles, drivers, dispatchTrip, cancelTrip } = useTransitStore();
+  const user = useAuth((s) => s.user);
+  const isDriver = user?.role === "driver";
+
   const nav = useNavigate();
   const t = trips.find((x) => x.id === tripId);
   if (!t) return <EmptyState title="Trip not found" />;
@@ -28,8 +31,8 @@ function TripDetail() {
   ];
   const activeIdx = t.status === "cancelled" ? -1 : timeline.findIndex((s) => s.key === t.status);
 
-  const doDispatch = () => {
-    const res = dispatchTrip(t.id);
+  const doDispatch = async () => {
+    const res = await dispatchTrip(t.id);
     if (!res.ok) return toast.error(res.error ?? "Unable to dispatch");
     toast.success(`Trip ${t.code} dispatched`);
   };
@@ -42,15 +45,19 @@ function TripDetail() {
         actions={
           <div className="flex gap-2">
             <Link to="/trips" className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><ArrowLeft className="h-4 w-4" /> Back</Link>
-            <Link to="/trips/$tripId/edit" params={{ tripId: t.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
-            {t.status === "draft" && (
+            {!isDriver && (
+              <Link to="/trips/$tripId/edit" params={{ tripId: t.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
+            )}
+            {t.status === "draft" && !isDriver && (
               <Button onClick={doDispatch} className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"><Play className="h-4 w-4 mr-1" /> Dispatch</Button>
             )}
             {t.status === "dispatched" && (
-              <Button onClick={() => { completeTrip(t.id); toast.success("Trip completed"); }} className="brutal-btn bg-success text-success-foreground"><CheckCircle2 className="h-4 w-4 mr-1" /> Complete</Button>
+              <Link to="/trips/$tripId/complete" params={{ tripId: t.id }} className="brutal-btn px-3 py-2 bg-success text-success-foreground inline-flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4" /> Complete
+              </Link>
             )}
-            {(t.status === "draft" || t.status === "dispatched") && (
-              <Button variant="outline" onClick={() => { cancelTrip(t.id); toast.success("Trip cancelled"); }} className="brutal-btn bg-card"><XCircle className="h-4 w-4 mr-1" /> Cancel</Button>
+            {(t.status === "draft" || t.status === "dispatched") && !isDriver && (
+              <Button variant="outline" onClick={async () => { await cancelTrip(t.id); toast.success("Trip cancelled"); }} className="brutal-btn bg-card"><XCircle className="h-4 w-4 mr-1" /> Cancel</Button>
             )}
           </div>
         }
