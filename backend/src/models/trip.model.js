@@ -47,6 +47,10 @@ const tripSchema = new mongoose.Schema(
       enum: ['DRAFT', 'DISPATCHED', 'COMPLETED', 'CANCELLED'],
       default: 'DRAFT',
     },
+    scheduledStartTime: {
+      type: Date,
+      default: null,
+    },
     dispatchTime: {
       type: Date,
       default: null,

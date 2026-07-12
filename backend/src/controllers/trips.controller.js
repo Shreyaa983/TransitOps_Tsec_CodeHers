@@ -4,6 +4,17 @@ import Driver from "../models/driver.model.js";
 import { buildCrudController } from "./crud.controller.js";
 import { createCrudService } from "../services/crud.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import {
+    safeNotify,
+    notifyTripDraftAssigned,
+    notifyTripDispatched,
+    notifyTripUpdated,
+    notifyTripCancelled,
+    notifyTripCompleted,
+    notifyDriverReassigned,
+    notifyVehicleChanged,
+} from "../services/driver-notification.service.js";
+import { env } from "../config/env.js";
 
 const crud = buildCrudController(Trip);
 const crudService = createCrudService(Trip);
@@ -48,6 +59,7 @@ const create = asyncHandler(async (req, res) => {
     req.body.status = "DRAFT";
 
     const document = await crudService.create(req.body);
+    safeNotify(notifyTripDraftAssigned(document));
     res.status(201).json({ success: true, data: document });
 });
 
@@ -59,7 +71,13 @@ const update = asyncHandler(async (req, res) => {
             message: "Cannot update status directly. Use /dispatch, /complete, or /cancel endpoints instead."
         });
     }
+    const existingTrip = await Trip.findById(req.params.id);
+    if (!existingTrip) {
+        return res.status(404).json({ success: false, message: "Trip not found" });
+    }
+
     const document = await crudService.update(req.params.id, req.body);
+    safeNotify(notifyTripUpdated(existingTrip, document));
     res.status(200).json({ success: true, data: document });
 });
 
@@ -102,6 +120,9 @@ const dispatchTrip = asyncHandler(async (req, res) => {
 
     trip.status = "DISPATCHED";
     trip.dispatchTime = new Date();
+    if (!trip.scheduledStartTime) {
+        trip.scheduledStartTime = new Date(Date.now() + env.tripReminderMinutes * 60 * 1000);
+    }
     await trip.save();
 
     vehicle.status = "ON_TRIP";
@@ -109,6 +130,9 @@ const dispatchTrip = asyncHandler(async (req, res) => {
 
     driver.status = "ON_TRIP";
     await driver.save();
+
+    const populatedTrip = await Trip.findById(trip._id).populate("vehicle driver");
+    safeNotify(notifyTripDispatched(populatedTrip));
 
     res.json({ success: true, data: trip });
 });
@@ -156,6 +180,9 @@ const completeTrip = asyncHandler(async (req, res) => {
         await driver.save();
     }
 
+    const populatedTrip = await Trip.findById(trip._id).populate("vehicle driver");
+    safeNotify(notifyTripCompleted(populatedTrip));
+
     res.json({ success: true, data: trip });
 });
 
@@ -186,6 +213,9 @@ const cancelTrip = asyncHandler(async (req, res) => {
         await driver.save();
     }
 
+    const populatedTrip = await Trip.findById(trip._id).populate("vehicle driver");
+    safeNotify(notifyTripCancelled(populatedTrip));
+
     res.json({ success: true, data: trip });
 });
 
@@ -214,6 +244,8 @@ const assignDriver = asyncHandler(async (req, res) => {
         return res.status(400).json({ success: false, message: "New driver's license is expired" });
     }
 
+    const oldDriverId = trip.driver;
+
     // If trip is DISPATCHED, handle status updates
     if (trip.status === "DISPATCHED") {
         const oldDriver = await Driver.findById(trip.driver);
@@ -227,6 +259,9 @@ const assignDriver = asyncHandler(async (req, res) => {
 
     trip.driver = driverId;
     await trip.save();
+
+    const populatedTrip = await Trip.findById(trip._id).populate("vehicle driver");
+    safeNotify(notifyDriverReassigned(populatedTrip, oldDriverId, newDriver));
 
     res.json({ success: true, data: trip });
 });
@@ -256,9 +291,10 @@ const assignVehicle = asyncHandler(async (req, res) => {
         return res.status(400).json({ success: false, message: `Cargo weight exceeds new vehicle capacity` });
     }
 
+    const oldVehicle = await Vehicle.findById(trip.vehicle);
+
     // If trip is DISPATCHED, handle status updates
     if (trip.status === "DISPATCHED") {
-        const oldVehicle = await Vehicle.findById(trip.vehicle);
         if (oldVehicle) {
             oldVehicle.status = "AVAILABLE";
             await oldVehicle.save();
@@ -269,6 +305,9 @@ const assignVehicle = asyncHandler(async (req, res) => {
 
     trip.vehicle = vehicleId;
     await trip.save();
+
+    const populatedTrip = await Trip.findById(trip._id).populate("vehicle driver");
+    safeNotify(notifyVehicleChanged(populatedTrip, oldVehicle, newVehicle));
 
     res.json({ success: true, data: trip });
 });

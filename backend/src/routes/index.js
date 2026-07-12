@@ -10,6 +10,7 @@ import expensesRoutes from './expenses.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import reportsRoutes from './reports.routes.js';
 import incidentsRoutes from './incidents.routes.js';
+import notificationsRoutes from './notifications.routes.js';
 import aiRoutes from '../ai/routes/index.js'; // ← AI Incident Analyzer (isolated module)
 
 const router = Router();
@@ -25,6 +26,7 @@ router.use('/expenses', expensesRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/incidents', incidentsRoutes);
+router.use('/notifications', notificationsRoutes);
 router.use('/ai', aiRoutes); // POST /api/ai/analyze-incident
 
 export default router;
