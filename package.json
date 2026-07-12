@@ -13,5 +13,9 @@
     "lint": "npm run lint --workspace=frontend",
     "format": "npm run format --workspace=frontend",
     "seed": "npm run seed --workspace=backend"
+  },
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }

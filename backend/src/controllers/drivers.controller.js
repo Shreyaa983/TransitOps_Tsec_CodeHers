@@ -110,7 +110,7 @@ const getEligibleDrivers = asyncHandler(async (_req, res) => {
     })
         .populate("user", "name email")
         .select(
-            "user licenseNumber licenseCategory safetyScore status"
+            "user name licenseNumber licenseCategory licenseExpiry phone safetyScore status"
         );
 
     res.json({
