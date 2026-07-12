@@ -132,13 +132,7 @@ function LoginPage() {
           <h2 className="mt-6 text-4xl font-extrabold tracking-tight leading-tight">Run your entire transport operation from one console.</h2>
           <p className="mt-4 text-primary-foreground/90">
             Real-time fleet utilization, dispatch workflows, maintenance tracking, fuel + expense analytics, and an AI copilot that answers the questions your team actually asks.
-          </p>
-          <ul className="mt-6 space-y-2 text-sm">
-            <li>• Live vehicle &amp; driver status</li>
-            <li>• Trip dispatch with built-in safety rules</li>
-            <li>• Fuel, maintenance &amp; ROI analytics</li>
-            <li>• AI copilot for instant answers</li>
-          </ul>
+          </p>  
         </div>
       </div>
     </div>

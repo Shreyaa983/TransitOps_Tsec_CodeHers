@@ -59,6 +59,7 @@ import { Route as AppExpensesHistoryRouteImport } from './routes/_app.expenses.h
 import { Route as AppExpensesExpenseIdRouteImport } from './routes/_app.expenses.$expenseId'
 import { Route as AppDriversNewRouteImport } from './routes/_app.drivers.new'
 import { Route as AppDriversDriverIdRouteImport } from './routes/_app.drivers.$driverId'
+import { Route as AppDriversDriverIdIndexRouteImport } from './routes/_app.drivers.$driverId.index'
 import { Route as AppVehiclesVehicleIdEditRouteImport } from './routes/_app.vehicles.$vehicleId.edit'
 import { Route as AppVehiclesVehicleIdDocumentsRouteImport } from './routes/_app.vehicles.$vehicleId.documents'
 import { Route as AppTripsTripIdEditRouteImport } from './routes/_app.trips.$tripId.edit'
@@ -317,6 +318,11 @@ const AppDriversDriverIdRoute = AppDriversDriverIdRouteImport.update({
   path: '/$driverId',
   getParentRoute: () => AppDriversRoute,
 } as any)
+const AppDriversDriverIdIndexRoute = AppDriversDriverIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppDriversDriverIdRoute,
+} as any)
 const AppVehiclesVehicleIdEditRoute =
   AppVehiclesVehicleIdEditRouteImport.update({
     id: '/edit',
@@ -419,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
   '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
+  '/drivers/$driverId/': typeof AppDriversDriverIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -427,7 +434,6 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
-  '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/drivers/new': typeof AppDriversNewRoute
   '/expenses/$expenseId': typeof AppExpensesExpenseIdRoute
   '/expenses/history': typeof AppExpensesHistoryRoute
@@ -469,6 +475,7 @@ export interface FileRoutesByTo {
   '/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
   '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
+  '/drivers/$driverId': typeof AppDriversDriverIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -530,6 +537,7 @@ export interface FileRoutesById {
   '/_app/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
   '/_app/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/_app/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
+  '/_app/drivers/$driverId/': typeof AppDriversDriverIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -590,6 +598,7 @@ export interface FileRouteTypes {
     | '/trips/$tripId/edit'
     | '/vehicles/$vehicleId/documents'
     | '/vehicles/$vehicleId/edit'
+    | '/drivers/$driverId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -598,7 +607,6 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/forgot-password'
     | '/login'
-    | '/drivers/$driverId'
     | '/drivers/new'
     | '/expenses/$expenseId'
     | '/expenses/history'
@@ -640,6 +648,7 @@ export interface FileRouteTypes {
     | '/trips/$tripId/edit'
     | '/vehicles/$vehicleId/documents'
     | '/vehicles/$vehicleId/edit'
+    | '/drivers/$driverId'
   id:
     | '__root__'
     | '/'
@@ -700,6 +709,7 @@ export interface FileRouteTypes {
     | '/_app/trips/$tripId/edit'
     | '/_app/vehicles/$vehicleId/documents'
     | '/_app/vehicles/$vehicleId/edit'
+    | '/_app/drivers/$driverId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1060,6 +1070,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDriversDriverIdRouteImport
       parentRoute: typeof AppDriversRoute
     }
+    '/_app/drivers/$driverId/': {
+      id: '/_app/drivers/$driverId/'
+      path: '/'
+      fullPath: '/drivers/$driverId/'
+      preLoaderRoute: typeof AppDriversDriverIdIndexRouteImport
+      parentRoute: typeof AppDriversDriverIdRoute
+    }
     '/_app/vehicles/$vehicleId/edit': {
       id: '/_app/vehicles/$vehicleId/edit'
       path: '/edit'
@@ -1122,11 +1139,13 @@ declare module '@tanstack/react-router' {
 interface AppDriversDriverIdRouteChildren {
   AppDriversDriverIdEditRoute: typeof AppDriversDriverIdEditRoute
   AppDriversDriverIdLicensesRoute: typeof AppDriversDriverIdLicensesRoute
+  AppDriversDriverIdIndexRoute: typeof AppDriversDriverIdIndexRoute
 }
 
 const AppDriversDriverIdRouteChildren: AppDriversDriverIdRouteChildren = {
   AppDriversDriverIdEditRoute: AppDriversDriverIdEditRoute,
   AppDriversDriverIdLicensesRoute: AppDriversDriverIdLicensesRoute,
+  AppDriversDriverIdIndexRoute: AppDriversDriverIdIndexRoute,
 }
 
 const AppDriversDriverIdRouteWithChildren =

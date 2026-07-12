@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { VehicleStatus, TripStatus, MaintenanceStatus } from "@/lib/mock-data";
 
-type Kind = VehicleStatus | TripStatus | MaintenanceStatus | "on_duty" | "off_duty" | "suspended";
+type Kind = VehicleStatus | TripStatus | MaintenanceStatus | "on_duty" | "off_duty" | "suspended" | "AVAILABLE" | "ON_TRIP" | "OFF_DUTY" | "SUSPENDED";
 
 const styles: Record<string, string> = {
   available: "bg-success/15 text-success border-success/40",
@@ -17,6 +17,10 @@ const styles: Record<string, string> = {
   on_duty: "bg-success/15 text-success border-success/40",
   off_duty: "bg-muted text-muted-foreground border-border-soft",
   suspended: "bg-destructive/15 text-destructive border-destructive/40",
+  AVAILABLE: "bg-success/15 text-success border-success/40",
+  ON_TRIP: "bg-primary/15 text-primary border-primary/40",
+  OFF_DUTY: "bg-muted text-muted-foreground border-border-soft",
+  SUSPENDED: "bg-destructive/15 text-destructive border-destructive/40",
 };
 
 const labels: Record<string, string> = {
@@ -33,6 +37,10 @@ const labels: Record<string, string> = {
   on_duty: "On Duty",
   off_duty: "Off Duty",
   suspended: "Suspended",
+  AVAILABLE: "Available",
+  ON_TRIP: "On Trip",
+  OFF_DUTY: "Off Duty",
+  SUSPENDED: "Suspended",
 };
 
 export function StatusBadge({ status, className }: { status: Kind; className?: string }) {
