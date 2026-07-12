@@ -17,7 +17,7 @@ export const authService = {
     }
 
     const user = await User.create(payload);
-    const safeUser = await User.findById(user._id).select('-password');
+    const safeUser = await User.findById(user._id).select('-password').populate('driver');
 
     return {
       user: safeUser,
@@ -38,7 +38,7 @@ export const authService = {
       throw new ApiError(401, 'Invalid credentials');
     }
 
-    const safeUser = await User.findById(user._id).select('-password');
+    const safeUser = await User.findById(user._id).select('-password').populate('driver');
 
     return {
       user: safeUser,

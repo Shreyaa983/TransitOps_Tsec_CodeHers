@@ -18,7 +18,7 @@ type LoginResponse = {
   success: boolean;
   data: {
     token: string;
-    user: { _id: string; name: string; email: string; role: string };
+    user: { _id: string; name: string; email: string; role: string; driver?: any };
   };
 };
 
@@ -39,9 +39,10 @@ function LoginPage() {
 
       // Backend role is UPPERCASE (e.g. "FLEET_MANAGER") — normalise to lowercase for frontend
       const role = res.data.user.role.toLowerCase() as Role;
+      const driverId = typeof res.data.user.driver === "object" ? res.data.user.driver?._id : res.data.user.driver;
 
       setAuth(
-        { email: res.data.user.email, name: res.data.user.name, role },
+        { email: res.data.user.email, name: res.data.user.name, role, _id: res.data.user._id, driverId },
         res.data.token,
       );
 
@@ -111,12 +112,31 @@ function LoginPage() {
           </form>
 
           {/* Demo credentials hint */}
-          <div className="mt-6 rounded-xl border-2 border-dashed border-muted p-4 text-xs text-muted-foreground space-y-1">
-            <p className="font-semibold mb-1">Demo credentials — password: <span className="font-mono">Password123!</span></p>
-            <p>Fleet Manager → <span className="font-mono">amina@transitops.com</span></p>
-            <p>Dispatcher → <span className="font-mono">jonas@transitops.com</span></p>
-            <p>Safety Officer → <span className="font-mono">tariq@transitops.com</span></p>
-            <p>Financial Analyst → <span className="font-mono">leah@transitops.com</span></p>
+          <div className="mt-6 rounded-xl border-2 border-dashed border-muted p-4 text-xs text-muted-foreground space-y-1.5">
+            <p className="font-semibold text-foreground mb-1">Click any role to quick-fill credentials (password: <span className="font-mono">Password123!</span>)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {[
+                { label: "Fleet Manager", email: "amina@transitops.com" },
+                { label: "Dispatcher", email: "jonas@transitops.com" },
+                { label: "Safety Officer", email: "tariq@transitops.com" },
+                { label: "Financial Analyst", email: "leah@transitops.com" },
+                { label: "Truck Driver (Samuel)", email: "samuel@transitops.com" },
+                { label: "Truck Driver (Grace)", email: "grace@transitops.com" },
+              ].map((item) => (
+                <button
+                  key={item.email}
+                  type="button"
+                  onClick={() => {
+                    setEmail(item.email);
+                    setPassword("Password123!");
+                  }}
+                  className="text-left px-2 py-1 rounded bg-muted/40 hover:bg-muted border border-border-soft flex items-center justify-between group transition-colors"
+                >
+                  <span className="font-medium text-foreground">{item.label}</span>
+                  <span className="font-mono text-[10px] text-muted-foreground group-hover:text-primary">{item.email}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

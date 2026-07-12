@@ -11,7 +11,8 @@ export const registerValidators = [
   requiredText('name'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-  body('role').isIn(['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST']).withMessage('Invalid role'),
+  body('role').isIn(['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST', 'DRIVER']).withMessage('Invalid role'),
+  body('driver').optional({ checkFalsy: true }).isMongoId().withMessage('driver must be a valid id'),
 ];
 
 export const loginValidators = [
@@ -23,14 +24,16 @@ export const userCreateValidators = [
   requiredText('name'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-  body('role').isIn(['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST']).withMessage('Invalid role'),
+  body('role').isIn(['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST', 'DRIVER']).withMessage('Invalid role'),
+  body('driver').optional({ checkFalsy: true }).isMongoId().withMessage('driver must be a valid id'),
 ];
 
 export const userUpdateValidators = [
   optionalText('name'),
   body('email').optional({ checkFalsy: true }).isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('password').optional({ checkFalsy: true }).isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-  body('role').optional({ checkFalsy: true }).isIn(['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST']).withMessage('Invalid role'),
+  body('role').optional({ checkFalsy: true }).isIn(['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST', 'DRIVER']).withMessage('Invalid role'),
+  body('driver').optional({ checkFalsy: true }).isMongoId().withMessage('driver must be a valid id'),
 ];
 
 export const vehicleCreateValidators = [
@@ -63,6 +66,7 @@ export const driverCreateValidators = [
   requiredText('phone'),
   body('safetyScore').optional().isNumeric().withMessage('safetyScore must be a number'),
   body('status').optional().isIn(['AVAILABLE', 'ON_TRIP', 'OFF_DUTY', 'SUSPENDED']).withMessage('Invalid status'),
+  body('user').optional({ checkFalsy: true }).isMongoId().withMessage('user must be a valid id'),
 ];
 
 export const driverUpdateValidators = [
@@ -73,6 +77,7 @@ export const driverUpdateValidators = [
   optionalText('phone'),
   optionalNumber('safetyScore'),
   body('status').optional().isIn(['AVAILABLE', 'ON_TRIP', 'OFF_DUTY', 'SUSPENDED']).withMessage('Invalid status'),
+  body('user').optional({ checkFalsy: true }).isMongoId().withMessage('user must be a valid id'),
 ];
 
 export const tripCreateValidators = [

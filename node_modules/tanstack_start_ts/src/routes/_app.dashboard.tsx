@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Truck, CheckCircle2, Wrench, Route as RouteIcon, Clock, Users, Activity, TrendingUp, AlertTriangle, Sparkles, Fuel } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, CartesianGrid } from "recharts";
-import { useTransitStore } from "@/lib/store";
+import { useTransitStore, useAuth, type AuthUser } from "@/lib/store";
 import { PageHeader } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { daysUntil, money } from "@/lib/format";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TransitOps" }] }),
@@ -14,6 +15,11 @@ export const Route = createFileRoute("/_app/dashboard")({
 
 function DashboardPage() {
   const { vehicles, drivers, trips, maintenance, expenses } = useTransitStore();
+  const user = useAuth((s) => s.user);
+
+  if (user?.role === "driver") {
+    return <DriverConsole user={user} />;
+  }
 
   const kpis = [
     { label: "Active Vehicles", value: vehicles.filter((v) => v.status !== "retired").length, icon: Truck, tone: "primary" },
@@ -245,6 +251,132 @@ function DashboardPage() {
             );
           })}
         </ol>
+      </div>
+    </div>
+  );
+}
+
+function DriverConsole({ user }: { user: AuthUser }) {
+  const { drivers, vehicles, trips, updateDriverStatus } = useTransitStore();
+  const driver = drivers.find((d) => d.id === user.driverId) ?? drivers.find((d) => d.name.toLowerCase() === user.name.toLowerCase());
+  const myTrips = trips.filter((t) => t.driverId === driver?.id || (driver && t.code.includes(driver.name)));
+  const currentTrip = myTrips.find((t) => t.status === "dispatched" || t.status === "draft");
+  const assignedVehicle = vehicles.find((v) => v.id === currentTrip?.vehicleId || v.status === "on_trip");
+
+  const handleStatusChange = async (newStatus: any) => {
+    if (!driver) return toast.error("Driver profile not linked.");
+    const res = await updateDriverStatus(driver.id, newStatus);
+    if (res.ok) toast.success(`Status updated to ${newStatus.replace("_", " ")}`);
+    else toast.error(res.error || "Failed to update status");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="brutal-card bg-gradient-to-r from-primary/15 via-primary/5 to-background p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-xl font-black brutal-border brutal-shadow-sm">
+              <Truck className="h-7 w-7" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black tracking-tight">{driver?.name ?? user.name}</h1>
+                {driver && <StatusBadge status={driver.status} />}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                License: <span className="font-mono font-semibold text-foreground">{driver?.licenseNumber ?? "DL-ACTIVE"}</span> · Category: <span className="font-semibold text-foreground">{driver?.category ?? "Heavy Goods"}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold text-muted-foreground mr-1">Update My Status:</span>
+            {(["available", "on_trip", "off_duty"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => handleStatusChange(s)}
+                className={`brutal-btn px-3 py-1.5 text-xs font-bold transition-all ${
+                  driver?.status === s || driver?.status === s.toUpperCase()
+                    ? "bg-primary text-primary-foreground brutal-shadow-sm scale-105"
+                    : "bg-card hover:bg-accent"
+                }`}
+              >
+                {s === "available" ? "Available" : s === "on_trip" ? "On Trip" : "Off Duty"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Current Assigned Vehicle Details */}
+        <div className="brutal-card p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-extrabold flex items-center gap-2">
+              <Truck className="h-4 w-4 text-primary" /> Assigned Vehicle (Registry Spec)
+            </h2>
+            <Link to="/vehicles" className="text-xs font-bold text-primary hover:underline">View Vehicle Registry →</Link>
+          </div>
+          {assignedVehicle ? (
+            <div className="space-y-3 bg-muted/30 p-4 rounded-xl border border-border-soft">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="text-lg font-black">{assignedVehicle.name}</div>
+                  <div className="text-xs text-muted-foreground">{assignedVehicle.model}</div>
+                </div>
+                <StatusBadge status={assignedVehicle.status} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-border-soft text-xs">
+                <div>
+                  <div className="text-muted-foreground">Reg #</div>
+                  <div className="font-mono font-bold text-sm">{assignedVehicle.registration}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Max Capacity</div>
+                  <div className="font-bold">{assignedVehicle.capacityKg} kg</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Odometer</div>
+                  <div className="font-bold">{assignedVehicle.odometerKm.toLocaleString()} km</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 text-center text-muted-foreground text-sm bg-muted/20 rounded-xl border border-dashed border-border-soft space-y-2">
+              <p>No active vehicle assigned right now.</p>
+              <Link to="/vehicles" className="inline-block text-xs font-bold text-primary hover:underline">Inspect master vehicle registry</Link>
+            </div>
+          )}
+        </div>
+
+        {/* Assigned Trips */}
+        <div className="brutal-card p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-extrabold flex items-center gap-2">
+              <RouteIcon className="h-4 w-4 text-primary" /> My Active / Assigned Trips
+            </h2>
+            <Link to="/trips" className="text-xs font-bold text-primary hover:underline">All Trips →</Link>
+          </div>
+          {myTrips.length > 0 ? (
+            <div className="space-y-2">
+              {myTrips.slice(0, 3).map((t) => (
+                <div key={t.id} className="p-3 rounded-xl bg-card border border-border-soft flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold">Trip {t.code}</div>
+                    <div className="text-xs text-muted-foreground">{t.source} → {t.destination}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={t.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 text-center text-muted-foreground text-sm bg-muted/20 rounded-xl border border-dashed border-border-soft">
+              No pending trips assigned to your profile.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
