@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express';
-import { analyzeIncident } from '../services/geminiService.js';
+import { analyzeIncident, chatWithCopilot } from '../services/geminiService.js';
 import { translateContent } from '../services/translateService.js';
 
 const router = Router();
@@ -77,6 +77,29 @@ router.post('/translate', async (req, res) => {
   }
 
   return res.status(200).json({ success: true, translated: result.data });
+});
+
+router.post('/chat', async (req, res) => {
+  const { message, context } = req.body;
+
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: 'MISSING_FIELD',
+      message: 'Request body must include a non-empty "message" string.',
+    });
+  }
+
+  const result = await chatWithCopilot(message, context || {});
+
+  if (!result.success) {
+    return res.status(500).json({
+      success: false,
+      error: result.error,
+    });
+  }
+
+  return res.status(200).json({ success: true, answer: result.answer });
 });
 
 export default router;

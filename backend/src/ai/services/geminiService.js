@@ -68,3 +68,45 @@ export async function analyzeIncident(incidentReport) {
     return { success: false, error: errorCode };
   }
 }
+
+export async function chatWithCopilot(message, fleetContext = {}) {
+  if (!message || typeof message !== 'string') {
+    return { success: false, error: 'INVALID_INPUT' };
+  }
+
+  const trimmed = message.trim();
+  if (!trimmed) return { success: false, error: 'EMPTY_MESSAGE' };
+
+  try {
+    const client = getClient();
+    const systemInstruction = `You are the AI Copilot for TransitOps, an enterprise commercial fleet management and transit operations system.
+Your job is to answer the fleet manager's questions clearly, concisely, and helpfully.
+If the question relates to the fleet status, use the provided fleet context summary to give factual, accurate numbers and details.
+Keep responses conversational, natural, and friendly—easy to read and also natural when spoken aloud via Text-to-Speech (keep answers under 3-4 sentences unless detailed analysis is requested). Do NOT use complex markdown tables if it can be explained clearly in bullet points or sentences.`;
+
+    const contextSummary = JSON.stringify(fleetContext, null, 2);
+    const prompt = `FLEET CONTEXT SUMMARY:\n${contextSummary}\n\nUSER QUESTION:\n"${trimmed}"\n\nProvide a clear, helpful answer:`;
+
+    const response = await client.models.generateContent({
+      model: MODEL_ID,
+      contents: prompt,
+      config: {
+        systemInstruction,
+        temperature: 0.3,
+        topP: 0.8,
+        topK: 20,
+        responseMimeType: 'text/plain',
+      },
+    });
+
+    const rawText = response.text?.trim() ?? '';
+    if (!rawText) return { success: false, error: 'AI_EMPTY_RESPONSE' };
+
+    return { success: true, answer: rawText };
+  } catch (err) {
+    console.error('[geminiService] chatWithCopilot API call failed:', err.message);
+    const errorCode = err.message?.includes('API_KEY') ? 'INVALID_API_KEY' : 'AI_SERVICE_ERROR';
+    return { success: false, error: errorCode };
+  }
+}
+
