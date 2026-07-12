@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
-import { useTransitStore } from "@/lib/store";
+import { useTransitStore, useAuth } from "@/lib/store";
 import { vehiclesApi } from "@/lib/vehicles-api";
 import { Button } from "@/components/ui/button";
 import { money, km, kg, shortDate } from "@/lib/format";
@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_app/vehicles/$vehicleId")({
 function VehicleDetail() {
   const { vehicleId } = useParams({ from: "/_app/vehicles/$vehicleId" });
   const { trips, drivers, maintenance, fuel, expenses } = useTransitStore();
+  const user = useAuth((s) => s.user);
+  const canEdit = user?.role === "fleet_manager";
 
   const { data: vehicle, isLoading, isError } = useQuery({
     queryKey: ["vehicles", vehicleId],
@@ -49,7 +51,9 @@ function VehicleDetail() {
           <div className="flex gap-2">
             <Link to="/vehicles" className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><ArrowLeft className="h-4 w-4" /> Back</Link>
             <Link to="/vehicles/$vehicleId/documents" params={{ vehicleId: vehicle.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><FileText className="h-4 w-4" /> Documents</Link>
-            <Link to="/vehicles/$vehicleId/edit" params={{ vehicleId: vehicle.id }} className="brutal-btn px-3 py-2 bg-primary text-primary-foreground inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
+            {canEdit && (
+              <Link to="/vehicles/$vehicleId/edit" params={{ vehicleId: vehicle.id }} className="brutal-btn px-3 py-2 bg-primary text-primary-foreground inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
+            )}
           </div>
         }
       />

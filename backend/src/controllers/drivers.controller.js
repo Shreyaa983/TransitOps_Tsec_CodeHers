@@ -43,6 +43,13 @@ const updateStatus = asyncHandler(async (req, res) => {
 
 // PATCH /drivers/me/status
 const updateMyStatus = asyncHandler(async (req, res) => {
+    if (req.user?.role === "DRIVER") {
+        return res.status(403).json({
+            success: false,
+            message: "Drivers are not authorized to set their own availability status. Contact a Dispatcher.",
+        });
+    }
+
     const { status } = req.body;
 
     const allowed = ["AVAILABLE", "ON_TRIP", "OFF_DUTY", "SUSPENDED"];

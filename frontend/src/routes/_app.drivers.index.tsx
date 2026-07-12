@@ -10,6 +10,7 @@ import { driversApi } from "@/lib/drivers-api";
 import { Plus, Search, AlertTriangle, Phone } from "lucide-react";
 import { daysUntil, shortDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/drivers/")({
   head: () => ({ meta: [{ title: "Drivers — TransitOps" }] }),
@@ -17,6 +18,8 @@ export const Route = createFileRoute("/_app/drivers/")({
 });
 
 function DriversPage() {
+  const user = useAuth((s) => s.user);
+  const canEdit = user?.role === "fleet_manager";
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "available" | "eligible" | "suspended" | "expiring">("all");
 
@@ -41,9 +44,11 @@ function DriversPage() {
         title="Driver management"
         subtitle={`${drivers.length} drivers · safety scores in real time`}
         actions={
-          <Link to="/drivers/new">
-            <Button className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"><Plus className="h-4 w-4 mr-1" /> Add driver</Button>
-          </Link>
+          canEdit ? (
+            <Link to="/drivers/new">
+              <Button className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"><Plus className="h-4 w-4 mr-1" /> Add driver</Button>
+            </Link>
+          ) : undefined
         }
       />
 

@@ -1,5 +1,6 @@
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -13,15 +14,86 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   const user = useAuth((s) => s.user);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const notifications = useTransitStore((s) => s.notifications);
+  const pendingIncidentsCount = useTransitStore((s) => s.pendingIncidents.length);
+  const markNotificationRead = useTransitStore((s) => s.markNotificationRead);
+  // Track which notification IDs we've already toasted so we don't repeat
+  const toastedIds = useRef<Set<string>>(new Set());
 
+  // Initial sync on login
   useEffect(() => {
     if (!user && typeof window !== "undefined") {
-      // Client-side redirect after hydration if session missing
       window.location.replace("/login");
     } else if (user) {
       useTransitStore.getState().syncWithBackend();
     }
   }, [user]);
+
+  // Polling sync every 30 seconds while logged in
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      useTransitStore.getState().syncWithBackend();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Fire a single global summary toast for fleet-manager incident batches,
+  // instead of one toast per pending incident item.
+  useEffect(() => {
+    if (!user) return;
+
+    const unreadIncidentNotifications = notifications.filter((n) => {
+      if (n.read) return false;
+      return n.id.startsWith("inc-") || n.title.toLowerCase().includes("incident");
+    });
+
+    if (user.role === "fleet_manager" && pendingIncidentsCount > 1) {
+      const summaryToastId = "fleet-manager-pending-incidents-summary";
+      if (toastedIds.current.has(summaryToastId)) return;
+
+      toastedIds.current.add(summaryToastId);
+      toast.error("Pending Incident Reports", {
+        description: `${pendingIncidentsCount} driver incident reports need your review.`,
+        duration: 8000,
+        action: {
+          label: "Review →",
+          onClick: () => {
+            unreadIncidentNotifications.forEach((n) => markNotificationRead(n.id));
+            window.location.assign("/incidents");
+          },
+        },
+      });
+      return;
+    }
+
+    unreadIncidentNotifications.forEach((n) => {
+      if (toastedIds.current.has(n.id)) return;
+      toastedIds.current.add(n.id);
+
+      if (n.level === "danger") {
+        toast.error(n.title, {
+          description: n.body,
+          duration: 8000,
+          action: user.role === "fleet_manager"
+            ? {
+                label: "Review →",
+                onClick: () => {
+                  markNotificationRead(n.id);
+                  window.location.assign("/incidents");
+                },
+              }
+            : undefined,
+        });
+      } else if (n.level === "success") {
+        toast.success(n.title, { description: n.body, duration: 6000 });
+      } else if (n.level === "warning") {
+        toast.warning(n.title, { description: n.body, duration: 6000 });
+      } else {
+        toast.info(n.title, { description: n.body, duration: 5000 });
+      }
+    });
+  }, [notifications, pendingIncidentsCount, user, markNotificationRead]);
 
   // Role gate: if the current top-level segment isn't allowed, show 403 inline
   const topSeg = pathname.split("/")[1] ?? "";

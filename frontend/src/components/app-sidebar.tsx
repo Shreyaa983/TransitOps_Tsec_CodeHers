@@ -52,6 +52,11 @@ export function AppSidebar() {
           .map((item) => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             const Icon = item.icon;
+            let displayLabel: string = item.label;
+            if (user?.role === "driver") {
+              if (item.key === "trips") displayLabel = "My Trips";
+              if (item.key === "settings") displayLabel = "My Profile";
+            }
             return (
               <Link
                 key={item.key}
@@ -64,7 +69,7 @@ export function AppSidebar() {
                 )}
               >
                 <Icon className="h-4.5 w-4.5 shrink-0" />
-                {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                {!sidebarCollapsed && <span className="truncate">{displayLabel}</span>}
               </Link>
             );
           })}

@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { vehiclesApi, type VehicleStatus } from "@/lib/vehicles-api";
-import { useTransitStore } from "@/lib/store";
+import { useTransitStore, useAuth } from "@/lib/store";
 import { money, km, kg } from "@/lib/format";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,9 @@ function VehiclesPage() {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to delete vehicle"),
   });
 
+  const user = useAuth((s) => s.user);
+  const canEdit = user?.role === "fleet_manager";
+
   const rows = useMemo(() => {
     return vehicles.filter((v) => {
       if (filter !== "all" && v.status !== filter) return false;
@@ -65,11 +68,13 @@ function VehiclesPage() {
         title="Vehicle registry"
         subtitle={`${vehicles.length} vehicles in your fleet`}
         actions={
-          <Link to="/vehicles/new">
-            <Button className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="h-4 w-4 mr-1" /> Add vehicle
-            </Button>
-          </Link>
+          canEdit ? (
+            <Link to="/vehicles/new">
+              <Button className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="h-4 w-4 mr-1" /> Add vehicle
+              </Button>
+            </Link>
+          ) : undefined
         }
       />
 
@@ -127,15 +132,19 @@ function VehiclesPage() {
                   <Td className="text-right">
                     <div className="inline-flex gap-1">
                       <Link to="/vehicles/$vehicleId" params={{ vehicleId: v.id }} className="brutal-btn p-2 bg-card hover:bg-accent"><Eye className="h-3.5 w-3.5" /></Link>
-                      <Link to="/vehicles/$vehicleId/edit" params={{ vehicleId: v.id }} className="brutal-btn p-2 bg-card hover:bg-accent"><Pencil className="h-3.5 w-3.5" /></Link>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(v.id, v.name)}
-                        disabled={deleteMutation.isPending}
-                        className="brutal-btn p-2 bg-card hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {canEdit && (
+                        <>
+                          <Link to="/vehicles/$vehicleId/edit" params={{ vehicleId: v.id }} className="brutal-btn p-2 bg-card hover:bg-accent"><Pencil className="h-3.5 w-3.5" /></Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(v.id, v.name)}
+                            disabled={deleteMutation.isPending}
+                            className="brutal-btn p-2 bg-card hover:bg-destructive hover:text-destructive-foreground"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </Td>
                 </tr>

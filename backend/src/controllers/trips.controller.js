@@ -8,6 +8,26 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const crud = buildCrudController(Trip);
 const crudService = createCrudService(Trip);
 
+// crud.list is overridden to filter for DRIVER role
+const list = asyncHandler(async (req, res) => {
+    let query = {};
+    if (req.user?.role === 'DRIVER') {
+        const driverId = req.user.driver?._id ?? req.user.driver;
+        let driver = driverId ? await Driver.findById(driverId) : null;
+        if (!driver) {
+            driver = await Driver.findOne({ user: req.user._id });
+        }
+        if (!driver) {
+            return res.status(200).json({ success: true, data: [] });
+        }
+        query.driver = driver._id;
+    }
+    const trips = await Trip.find(query)
+        .populate('vehicle driver')
+        .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: trips });
+});
+
 // POST /trips (with custom validations)
 const create = asyncHandler(async (req, res) => {
     const { vehicle: vehicleId, driver: driverId, cargoWeight } = req.body;
@@ -328,6 +348,7 @@ const getTodaysTrips = asyncHandler(async (_req, res) => {
 
 export default {
     ...crud,
+    list,
     create,
     update,
     dispatchTrip,

@@ -36,13 +36,13 @@ type Actions = {
   completeTrip: (id: string, actualDistance?: number, fuelConsumed?: number, finalOdometer?: number) => Promise<{ ok: boolean; error?: string }>;
   cancelTrip: (id: string) => Promise<{ ok: boolean; error?: string }>;
 
-  addMaintenance: (m: MaintenanceLog) => void;
+  addMaintenance: (m: MaintenanceLog) => Promise<void>;
   updateMaintenance: (id: string, patch: Partial<MaintenanceLog>) => void;
   startMaintenance: (id: string) => void;
   completeMaintenance: (id: string) => void;
 
-  addFuel: (f: FuelLog) => void;
-  addExpense: (e: Expense) => void;
+  addFuel: (f: FuelLog) => Promise<void>;
+  addExpense: (e: Expense) => Promise<void>;
 
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
@@ -133,12 +133,19 @@ export const useTransitStore = create<State & Actions>()(
       syncWithBackend: async () => {
         if (!useAuth.getState().token) return;
         try {
-          const [resVehicles, resDrivers, resTrips, resIncidents] = await Promise.all([
-            api.get<{ success: boolean; data: any[] }>("/vehicles").catch(() => null),
-            api.get<{ success: boolean; data: any[] }>("/drivers").catch(() => null),
-            api.get<{ success: boolean; data: any[] }>("/trips").catch(() => null),
-            useAuth.getState().user?.role === 'fleet_manager'
+          const user = useAuth.getState().user;
+          const [resVehicles, resDrivers, resTrips, resFuel, resMaintenance, resExpenses, resIncidents, resMyIncidents] = await Promise.all([
+            api.get<{ success: boolean; data: any[] }>('/vehicles').catch(() => null),
+            api.get<{ success: boolean; data: any[] }>('/drivers').catch(() => null),
+            api.get<{ success: boolean; data: any[] }>('/trips').catch(() => null),
+            api.get<{ success: boolean; data: any[] }>('/fuel').catch(() => null),
+            api.get<{ success: boolean; data: any[] }>('/maintenance').catch(() => null),
+            api.get<{ success: boolean; data: any[] }>('/expenses').catch(() => null),
+            user?.role === 'fleet_manager'
               ? api.get<{ success: boolean; data: any[] }>("/incidents?status=PENDING").catch(() => null)
+              : Promise.resolve(null),
+            user?.role === 'driver' || user?.role === 'fleet_manager'
+              ? api.get<{ success: boolean; data: any[] }>("/incidents").catch(() => null)
               : Promise.resolve(null),
           ]);
 
@@ -194,8 +201,146 @@ export const useTransitStore = create<State & Actions>()(
             set({ trips: mappedTrips });
           }
 
+          if (resFuel && resFuel.data && Array.isArray(resFuel.data)) {
+            const mappedFuel: FuelLog[] = resFuel.data.map((f: any) => ({
+              id: f._id || f.id,
+              vehicleId: f.vehicle?._id || f.vehicle || "",
+              litres: Number(f.liters ?? 0),
+              pricePerL: Number(f.cost && f.liters ? (f.cost / f.liters) : 0),
+              odometer: Number(f.odometer ?? 0),
+              date: f.date ? new Date(f.date).toISOString() : new Date().toISOString(),
+            }));
+            set({ fuel: mappedFuel });
+          }
+
+          if (resMaintenance && resMaintenance.data && Array.isArray(resMaintenance.data)) {
+            const mappedMaintenance: MaintenanceLog[] = resMaintenance.data.map((m: any) => ({
+              id: m._id || m.id,
+              vehicleId: m.vehicle?._id || m.vehicle || "",
+              issue: m.issue || "",
+              description: m.description || "",
+              technician: m.technician || "",
+              cost: Number(m.cost ?? 0),
+              status: (m.status || "open").toLowerCase() as any,
+              createdAt: m.openedAt ? new Date(m.openedAt).toISOString() : new Date(m.createdAt || Date.now()).toISOString(),
+              completedAt: m.closedAt ? new Date(m.closedAt).toISOString() : undefined,
+            }));
+            set({ maintenance: mappedMaintenance });
+          }
+
+          if (resExpenses && resExpenses.data && Array.isArray(resExpenses.data)) {
+            const mappedExpenses: Expense[] = resExpenses.data.map((e: any) => ({
+              id: e._id || e.id,
+              vehicleId: e.vehicle?._id || e.vehicle || "",
+              category: (e.category || "other").toLowerCase() as Expense["category"],
+              amount: Number(e.amount ?? 0),
+              note: e.description || "",
+              date: e.date ? new Date(e.date).toISOString() : new Date().toISOString(),
+            }));
+            set({ expenses: mappedExpenses });
+          }
+
           if (resIncidents && resIncidents.data && Array.isArray(resIncidents.data)) {
             set({ pendingIncidents: resIncidents.data });
+          }
+
+          // 4. Role-based static & dynamic notification generation
+          if (user) {
+            set((s) => {
+              const currentNotifications = s.notifications;
+
+              // Filter static seed notifications by role
+              const filteredSeeds = seedNotifications.filter((n) => {
+                const titleLower = n.title.toLowerCase();
+                const bodyLower = n.body.toLowerCase();
+                if (user.role === "driver") {
+                  return titleLower.includes("trip") || bodyLower.includes("trip");
+                }
+                if (user.role === "financial_analyst") {
+                  return titleLower.includes("expense") || titleLower.includes("fuel") || bodyLower.includes("expense") || bodyLower.includes("fuel");
+                }
+                if (user.role === "safety_officer") {
+                  return titleLower.includes("license") || titleLower.includes("maintenance") || bodyLower.includes("license") || bodyLower.includes("maintenance");
+                }
+                if (user.role === "dispatcher") {
+                  return titleLower.includes("trip") || titleLower.includes("license") || bodyLower.includes("trip") || bodyLower.includes("license");
+                }
+                // fleet_manager sees all
+                return true;
+              });
+
+              // Generate dynamic incident notifications from backend response
+              const dynamicList: Notification[] = [];
+              if (resMyIncidents && resMyIncidents.data && Array.isArray(resMyIncidents.data)) {
+                resMyIncidents.data.forEach((inc: any) => {
+                  const vehicleName = inc.vehicle?.name || "Vehicle";
+                  const driverName = inc.driver?.name || "Driver";
+
+                  if (user.role === "driver") {
+                    if (inc.status === "APPROVED") {
+                      dynamicList.push({
+                        id: `inc-app-${inc._id}`,
+                        title: "Incident Approved",
+                        body: `Your issue report for ${vehicleName} was approved. Scheduled for maintenance.`,
+                        level: "success",
+                        read: false,
+                        createdAt: inc.updatedAt || inc.createdAt,
+                      });
+                    } else if (inc.status === "REJECTED") {
+                      dynamicList.push({
+                        id: `inc-rej-${inc._id}`,
+                        title: "Incident Rejected",
+                        body: `Your issue report for ${vehicleName} was rejected.`,
+                        level: "warning",
+                        read: false,
+                        createdAt: inc.updatedAt || inc.createdAt,
+                      });
+                    } else if (inc.status === "PENDING") {
+                      dynamicList.push({
+                        id: `inc-pen-${inc._id}`,
+                        title: "Incident Reported",
+                        body: `Your report for ${vehicleName} is pending review.`,
+                        level: "info",
+                        read: true,
+                        createdAt: inc.createdAt,
+                      });
+                    }
+                  }
+
+                  if (user.role === "fleet_manager") {
+                    if (inc.status === "PENDING") {
+                      dynamicList.push({
+                        id: `inc-pending-${inc._id}`,
+                        title: "Pending Incident Review",
+                        body: `Driver ${driverName} reported an incident on ${vehicleName} requiring review.`,
+                        level: "danger",
+                        read: false,
+                        createdAt: inc.createdAt,
+                      });
+                    }
+                  }
+                });
+              }
+
+              // Merge maps preserving read/unread status
+              const combinedMap = new Map<string, any>();
+
+              filteredSeeds.forEach((n) => {
+                const existing = currentNotifications.find((x) => x.id === n.id);
+                combinedMap.set(n.id, existing ? { ...n, read: existing.read } : n);
+              });
+
+              dynamicList.forEach((n) => {
+                const existing = currentNotifications.find((x) => x.id === n.id);
+                combinedMap.set(n.id, existing ? { ...n, read: existing.read } : n);
+              });
+
+              const updatedNotifications = Array.from(combinedMap.values()).sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              );
+
+              return { notifications: updatedNotifications };
+            });
           }
         } catch {
           // Ignore network sync errors
@@ -318,7 +463,27 @@ export const useTransitStore = create<State & Actions>()(
         return { ok: true };
       },
 
-      addMaintenance: (m) => set((s) => ({ maintenance: [m, ...s.maintenance] })),
+      addMaintenance: async (m) => {
+        if (useAuth.getState().token) {
+          try {
+            await api.post('/maintenance', {
+              vehicle: m.vehicleId,
+              issue: m.issue,
+              description: m.description,
+              technician: m.technician,
+              cost: Number(m.cost ?? 0),
+              status: 'OPEN',
+              openedAt: m.createdAt,
+            });
+            await get().syncWithBackend();
+            return;
+          } catch {
+            // Fall back to local optimistic update on network error
+          }
+        }
+
+        set((s) => ({ maintenance: [m, ...s.maintenance] }));
+      },
       updateMaintenance: (id, patch) => set((s) => ({ maintenance: s.maintenance.map((m) => (m.id === id ? { ...m, ...patch } : m)) })),
       startMaintenance: (id) => {
         const m = get().maintenance.find((x) => x.id === id);
@@ -337,8 +502,44 @@ export const useTransitStore = create<State & Actions>()(
         }));
       },
 
-      addFuel: (f) => set((s) => ({ fuel: [f, ...s.fuel] })),
-      addExpense: (e) => set((s) => ({ expenses: [e, ...s.expenses] })),
+      addFuel: async (f) => {
+        if (useAuth.getState().token) {
+          try {
+            await api.post('/fuel', {
+              vehicle: f.vehicleId,
+              liters: Number(f.litres ?? 0),
+              cost: Number((f.litres * f.pricePerL).toFixed(2)),
+              odometer: Number(f.odometer ?? 0),
+              date: f.date,
+            });
+            await get().syncWithBackend();
+            return;
+          } catch {
+            // Fall back to local optimistic update on network error
+          }
+        }
+
+        set((s) => ({ fuel: [f, ...s.fuel] }));
+      },
+      addExpense: async (e) => {
+        if (useAuth.getState().token) {
+          try {
+            await api.post('/expenses', {
+              vehicle: e.vehicleId,
+              category: e.category.toUpperCase(),
+              amount: Number(e.amount ?? 0),
+              description: e.note,
+              date: e.date,
+            });
+            await get().syncWithBackend();
+            return;
+          } catch {
+            // Fall back to local optimistic update on network error
+          }
+        }
+
+        set((s) => ({ expenses: [e, ...s.expenses] }));
+      },
 
       markNotificationRead: (id) => set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
       markAllNotificationsRead: () => set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
@@ -390,10 +591,10 @@ export const useUI = create<UIState>()(
 // Role → allowed top-level sections
 export const roleAccess: Record<Role, string[]> = {
   fleet_manager: ["dashboard", "vehicles", "drivers", "trips", "maintenance", "fuel", "expenses", "reports", "incidents", "ai-copilot", "notifications", "settings"],
-  dispatcher: ["dashboard", "vehicles", "drivers", "trips", "reports", "notifications", "ai-copilot", "settings"],
-  safety_officer: ["dashboard", "drivers", "maintenance", "reports", "notifications", "settings"],
-  financial_analyst: ["dashboard", "fuel", "expenses", "reports", "notifications", "settings"],
-  driver: ["dashboard", "vehicles", "trips", "maintenance", "report-incident", "fuel", "notifications", "settings"],
+  dispatcher: ["dashboard", "trips", "vehicles", "drivers", "notifications", "ai-copilot"],
+  safety_officer: ["dashboard", "drivers", "vehicles", "reports", "notifications"],
+  financial_analyst: ["dashboard", "fuel", "expenses", "reports", "notifications"],
+  driver: ["dashboard", "settings", "notifications", "report-incident", "ai-copilot"],
 };
 export const roleLabel: Record<Role, string> = {
   fleet_manager: "Fleet Manager",

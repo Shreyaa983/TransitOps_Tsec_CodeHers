@@ -13,20 +13,26 @@ export const Route = createFileRoute("/_app/expenses/new")({
   component: () => {
     const { vehicles, addExpense } = useTransitStore();
     const nav = useNavigate();
-    const [f, setF] = useState<{ vehicleId: string; category: Expense["category"]; amount: number; note: string }>({ vehicleId: "", category: "fuel", amount: 0, note: "" });
+    const [f, setF] = useState<{ vehicleId: string; category: Exclude<Expense["category"], "fuel" | "maintenance">; amount: number; note: string }>({ vehicleId: "", category: "other", amount: 0, note: "" });
     return (
       <div>
         <PageHeader title="Add expense" />
-        <form onSubmit={(e) => { e.preventDefault(); addExpense({ id: `e${Date.now()}`, ...f, date: new Date().toISOString() }); toast.success("Expense added"); nav({ to: "/expenses" }); }}
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          if (!f.vehicleId) return toast.error("Select a vehicle");
+          void addExpense({ id: `e${Date.now()}`, ...f, date: new Date().toISOString() });
+          toast.success("Expense added");
+          nav({ to: "/expenses" });
+        }}
           className="brutal-card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
           <div className="space-y-1.5"><Label className="text-xs font-semibold">Category</Label>
-            <select className="brutal-input w-full" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value as Expense["category"] })}>
-              <option value="fuel">Fuel</option><option value="maintenance">Maintenance</option><option value="tolls">Tolls</option><option value="insurance">Insurance</option><option value="other">Other</option>
+            <select className="brutal-input w-full" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value as Exclude<Expense["category"], "fuel" | "maintenance"> })}>
+              <option value="tolls">Tolls</option><option value="insurance">Insurance</option><option value="other">Other</option>
             </select>
           </div>
-          <div className="space-y-1.5"><Label className="text-xs font-semibold">Vehicle (optional)</Label>
+          <div className="space-y-1.5"><Label className="text-xs font-semibold">Vehicle</Label>
             <select className="brutal-input w-full" value={f.vehicleId} onChange={(e) => setF({ ...f, vehicleId: e.target.value })}>
-              <option value="">—</option>{vehicles.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              <option value="">Select…</option>{vehicles.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </div>
           <div className="space-y-1.5"><Label className="text-xs font-semibold">Amount ($)</Label><Input type="number" className="brutal-input" value={f.amount} onChange={(e) => setF({ ...f, amount: +e.target.value })} /></div>

@@ -13,8 +13,10 @@ export function AppTopbar() {
   const { theme, setTheme } = useUI();
   const notifications = useTransitStore((s) => s.notifications);
   const markAll = useTransitStore((s) => s.markAllNotificationsRead);
+  const markNotificationRead = useTransitStore((s) => s.markNotificationRead);
   const pendingIncidentsCount = useTransitStore((s) => s.pendingIncidents.length);
-  const unread = notifications.filter((n) => !n.read).length + (user?.role === "fleet_manager" ? pendingIncidentsCount : 0);
+  const unread = notifications.filter((n) => !n.read).length;
+  const unreadIncidentNotifications = notifications.filter((n) => !n.read && (n.id.startsWith("inc-") || n.title.toLowerCase().includes("incident")));
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -66,10 +68,14 @@ export function AppTopbar() {
           </SheetHeader>
           <div className="mt-4 space-y-2 overflow-y-auto pr-1">
             {notifications.map((n) => (
-              <div key={n.id} className={cn(
-                "rounded-xl border-2 p-3 transition-colors",
-                n.read ? "border-border-soft bg-muted/40" : "border-border bg-card brutal-shadow-sm",
-              )}>
+              <button
+                key={n.id}
+                onClick={() => markNotificationRead(n.id)}
+                className={cn(
+                  "w-full rounded-xl border-2 p-3 text-left transition-colors",
+                  n.read ? "border-border-soft bg-muted/40" : "border-border bg-card brutal-shadow-sm",
+                )}
+              >
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "h-2 w-2 rounded-full",
@@ -81,10 +87,13 @@ export function AppTopbar() {
                   <div className="text-sm font-semibold">{n.title}</div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{n.body}</p>
-              </div>
+              </button>
             ))}
-            {user?.role === "fleet_manager" && pendingIncidentsCount > 0 && (
-              <div onClick={() => nav({ to: "/incidents" })} className="rounded-xl border-2 border-border bg-danger/10 brutal-shadow-sm p-3 cursor-pointer transition-colors hover:bg-danger/20">
+            {user?.role === "fleet_manager" && unreadIncidentNotifications.length > 0 && (
+              <div onClick={() => {
+                unreadIncidentNotifications.forEach((n) => markNotificationRead(n.id));
+                nav({ to: "/incidents" });
+              }} className="rounded-xl border-2 border-border bg-danger/10 brutal-shadow-sm p-3 cursor-pointer transition-colors hover:bg-danger/20">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
                   <div className="text-sm font-semibold text-danger">Pending Incident Reports</div>

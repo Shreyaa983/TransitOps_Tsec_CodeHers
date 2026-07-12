@@ -5,7 +5,7 @@ import {
     driverCreateValidators,
     driverUpdateValidators,
 } from "../validators/index.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -15,7 +15,7 @@ router.use(protect);
 
 router.patch("/me/status", driverController.updateMyStatus);
 
-router.patch("/:id/status", driverController.updateStatus);
+router.patch("/:id/status", authorizeRoles("DISPATCHER"), driverController.updateStatus);
 
 router.get("/available", driverController.getAvailableDrivers);
 
