@@ -23,9 +23,14 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST'],
+      enum: ['FLEET_MANAGER', 'DISPATCHER', 'SAFETY_OFFICER', 'FINANCIAL_ANALYST', 'DRIVER'],
       required: true,
       default: 'FLEET_MANAGER',
+    },
+    driver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Driver',
+      default: null,
     },
   },
   { timestamps: true }

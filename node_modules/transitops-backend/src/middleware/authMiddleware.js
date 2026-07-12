@@ -14,7 +14,7 @@ export const protect = async (req, _res, next) => {
 
   try {
     const decoded = jwt.verify(token, env.jwtSecret);
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id).select('-password').populate('driver');
 
     if (!user) {
       return next(new ApiError(401, 'Not authorized, user not found'));

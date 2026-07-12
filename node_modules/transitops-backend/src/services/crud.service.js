@@ -9,13 +9,26 @@ const hashUserPasswordIfNeeded = async (model, payload) => {
   return payload;
 };
 
+const applyPopulations = (query, modelName) => {
+  if (modelName === 'User') {
+    return query.select('-password').populate('driver');
+  }
+  if (modelName === 'Driver') {
+    return query.populate('user');
+  }
+  if (modelName === 'Trip') {
+    return query.populate('vehicle driver');
+  }
+  return query;
+};
+
 export const createCrudService = (model) => ({
   async list() {
-    return model.find().sort({ createdAt: -1 });
+    return applyPopulations(model.find(), model.modelName).sort({ createdAt: -1 });
   },
 
   async getById(id) {
-    const document = await model.findById(id);
+    const document = await applyPopulations(model.findById(id), model.modelName);
 
     if (!document) {
       throw new ApiError(404, `${model.modelName} not found`);
@@ -25,15 +38,19 @@ export const createCrudService = (model) => ({
   },
 
   async create(payload) {
-    return model.create(payload);
+    const created = await model.create(payload);
+    return applyPopulations(model.findById(created._id), model.modelName);
   },
 
   async update(id, payload) {
     const nextPayload = await hashUserPasswordIfNeeded(model, { ...payload });
-    const updatedDocument = await model.findByIdAndUpdate(id, nextPayload, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedDocument = await applyPopulations(
+      model.findByIdAndUpdate(id, nextPayload, {
+        new: true,
+        runValidators: true,
+      }),
+      model.modelName
+    );
 
     if (!updatedDocument) {
       throw new ApiError(404, `${model.modelName} not found`);

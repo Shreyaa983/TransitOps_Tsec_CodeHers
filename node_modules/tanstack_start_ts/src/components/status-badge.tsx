@@ -43,14 +43,15 @@ const labels: Record<string, string> = {
   SUSPENDED: "Suspended",
 };
 
-export function StatusBadge({ status, className }: { status: Kind; className?: string }) {
+export function StatusBadge({ status, className }: { status: Kind | string; className?: string }) {
+  const normalized = status ? (typeof status === "string" ? status.toLowerCase() : status) : "available";
   return (
     <span className={cn(
       "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-      styles[status] ?? "bg-muted text-muted-foreground border-border-soft",
+      styles[normalized] ?? "bg-muted text-muted-foreground border-border-soft",
       className,
     )}>
-      {labels[status] ?? status}
+      {labels[normalized] ?? status}
     </span>
   );
 }

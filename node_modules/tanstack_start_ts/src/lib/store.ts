@@ -23,7 +23,10 @@ type Actions = {
 
   addDriver: (d: Driver) => void;
   updateDriver: (id: string, patch: Partial<Driver>) => void;
+  updateDriverStatus: (id: string, status: string) => Promise<{ ok: boolean; error?: string }>;
   deleteDriver: (id: string) => void;
+
+  syncWithBackend: () => Promise<void>;
 
   addTrip: (t: Trip) => void;
   updateTrip: (id: string, patch: Partial<Trip>) => void;
@@ -59,13 +62,137 @@ export const useTransitStore = create<State & Actions>()(
       ...initial,
       reset: () => set(initial),
 
-      addVehicle: (v) => set((s) => ({ vehicles: [v, ...s.vehicles] })),
-      updateVehicle: (id, patch) => set((s) => ({ vehicles: s.vehicles.map((v) => (v.id === id ? { ...v, ...patch } : v)) })),
-      deleteVehicle: (id) => set((s) => ({ vehicles: s.vehicles.filter((v) => v.id !== id) })),
+      addVehicle: async (v) => {
+        set((s) => ({ vehicles: [v, ...s.vehicles] }));
+        if (useAuth.getState().token) {
+          try {
+            await api.post("/vehicles", {
+              registrationNumber: v.registration,
+              name: v.name,
+              model: v.model,
+              type: v.type,
+              maxLoadCapacity: v.capacityKg,
+              odometer: v.odometerKm,
+              acquisitionCost: v.acquisitionCost,
+              status: v.status.toUpperCase(),
+            });
+            await get().syncWithBackend();
+          } catch {}
+        }
+      },
+      updateVehicle: async (id, patch) => {
+        set((s) => ({ vehicles: s.vehicles.map((v) => (v.id === id ? { ...v, ...patch } : v)) }));
+        if (useAuth.getState().token) {
+          try {
+            const backendPatch: any = {};
+            if (patch.registration !== undefined) backendPatch.registrationNumber = patch.registration;
+            if (patch.name !== undefined) backendPatch.name = patch.name;
+            if (patch.model !== undefined) backendPatch.model = patch.model;
+            if (patch.type !== undefined) backendPatch.type = patch.type;
+            if (patch.capacityKg !== undefined) backendPatch.maxLoadCapacity = patch.capacityKg;
+            if (patch.odometerKm !== undefined) backendPatch.odometer = patch.odometerKm;
+            if (patch.acquisitionCost !== undefined) backendPatch.acquisitionCost = patch.acquisitionCost;
+            if (patch.status !== undefined) backendPatch.status = patch.status.toUpperCase();
+            await api.patch(`/vehicles/${id}`, backendPatch);
+            await get().syncWithBackend();
+          } catch {}
+        }
+      },
+      deleteVehicle: async (id) => {
+        set((s) => ({ vehicles: s.vehicles.filter((v) => v.id !== id) }));
+        if (useAuth.getState().token) {
+          try {
+            await api.delete(`/vehicles/${id}`);
+          } catch {}
+        }
+      },
 
       addDriver: (d) => set((s) => ({ drivers: [d, ...s.drivers] })),
       updateDriver: (id, patch) => set((s) => ({ drivers: s.drivers.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
+      updateDriverStatus: async (id, status) => {
+        try {
+          const backendStatus = status.toUpperCase();
+          if (useAuth.getState().token) {
+            await api.patch("/drivers/me/status", { status: backendStatus }).catch(async () => {
+              await api.patch(`/drivers/${id}`, { status: backendStatus });
+            });
+          }
+          set((s) => ({
+            drivers: s.drivers.map((d) => (d.id === id ? { ...d, status: status as any } : d)),
+          }));
+          return { ok: true };
+        } catch (err: any) {
+          return { ok: false, error: err.message || "Failed to update status" };
+        }
+      },
       deleteDriver: (id) => set((s) => ({ drivers: s.drivers.filter((d) => d.id !== id) })),
+
+      syncWithBackend: async () => {
+        if (!useAuth.getState().token) return;
+        try {
+          const [resVehicles, resDrivers, resTrips] = await Promise.all([
+            api.get<{ success: boolean; data: any[] }>("/vehicles").catch(() => null),
+            api.get<{ success: boolean; data: any[] }>("/drivers").catch(() => null),
+            api.get<{ success: boolean; data: any[] }>("/trips").catch(() => null),
+          ]);
+
+          if (resVehicles && resVehicles.data && Array.isArray(resVehicles.data)) {
+            const mappedVehicles: Vehicle[] = resVehicles.data.map((v: any) => ({
+              id: v._id || v.id,
+              registration: v.registrationNumber || v.registration || "N/A",
+              name: v.name || "Vehicle",
+              model: v.model || "Unknown",
+              type: v.type || "Truck",
+              capacityKg: v.maxLoadCapacity || v.capacityKg || 0,
+              odometerKm: v.odometer || v.odometerKm || 0,
+              acquisitionCost: v.acquisitionCost || 0,
+              status: (v.status || "AVAILABLE").toLowerCase() as any,
+              fuelType: "Diesel",
+            }));
+            if (mappedVehicles.length > 0) {
+              set({ vehicles: mappedVehicles });
+            }
+          }
+
+          if (resDrivers && resDrivers.data && Array.isArray(resDrivers.data)) {
+            const mappedDrivers: Driver[] = resDrivers.data.map((d: any) => ({
+              id: d._id || d.id,
+              name: d.name || "Driver",
+              licenseNumber: d.licenseNumber || d.license || "N/A",
+              category: d.licenseCategory || d.category || "C",
+              licenseExpiry: d.licenseExpiry ? new Date(d.licenseExpiry).toISOString() : new Date().toISOString(),
+              phone: d.phone || "",
+              safetyScore: d.safetyScore ?? 100,
+              status: (d.status || "AVAILABLE").toLowerCase() as any,
+            }));
+            if (mappedDrivers.length > 0) {
+              set({ drivers: mappedDrivers });
+            }
+          }
+
+          if (resTrips && resTrips.data && Array.isArray(resTrips.data)) {
+            const mappedTrips: Trip[] = resTrips.data.map((t: any) => ({
+              id: t._id || t.id,
+              code: t.code || `TR-${(t._id || "1000").slice(-4).toUpperCase()}`,
+              source: t.source || "Origin",
+              destination: t.destination || "Destination",
+              vehicleId: t.vehicle?._id || t.vehicle || t.vehicleId || "",
+              driverId: t.driver?._id || t.driver || t.driverId || "",
+              cargoKg: t.cargoWeight || t.cargoKg || 0,
+              distanceKm: t.plannedDistance || t.actualDistance || t.distanceKm || 0,
+              dispatchDate: t.dispatchTime ? new Date(t.dispatchTime).toISOString() : new Date().toISOString(),
+              status: (t.status || "DRAFT").toLowerCase() as any,
+              fuelUsedL: t.fuelConsumed || t.fuelUsedL || 0,
+              costUSD: t.costUSD || 0,
+            }));
+            if (mappedTrips.length > 0) {
+              set({ trips: mappedTrips });
+            }
+          }
+        } catch {
+          // Ignore network sync errors
+        }
+      },
 
       addTrip: (t) => set((s) => ({ trips: [t, ...s.trips] })),
       updateTrip: (id, patch) => set((s) => ({ trips: s.trips.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
@@ -136,8 +263,8 @@ export const useTransitStore = create<State & Actions>()(
   ),
 );
 
-export type Role = "fleet_manager" | "dispatcher" | "safety_officer" | "financial_analyst";
-export type AuthUser = { email: string; name: string; role: Role };
+export type Role = "fleet_manager" | "dispatcher" | "safety_officer" | "financial_analyst" | "driver";
+export type AuthUser = { email: string; name: string; role: Role; _id?: string; driverId?: string };
 
 type AuthState = {
   user: AuthUser | null;
@@ -182,10 +309,12 @@ export const roleAccess: Record<Role, string[]> = {
   dispatcher: ["dashboard", "vehicles", "drivers", "trips", "notifications", "ai-copilot", "settings"],
   safety_officer: ["dashboard", "drivers", "maintenance", "reports", "notifications", "settings"],
   financial_analyst: ["dashboard", "fuel", "expenses", "reports", "notifications", "settings"],
+  driver: ["dashboard", "vehicles", "trips", "maintenance", "fuel", "notifications", "settings"],
 };
 export const roleLabel: Record<Role, string> = {
   fleet_manager: "Fleet Manager",
   dispatcher: "Dispatcher",
   safety_officer: "Safety Officer",
   financial_analyst: "Financial Analyst",
+  driver: "Truck Driver",
 };

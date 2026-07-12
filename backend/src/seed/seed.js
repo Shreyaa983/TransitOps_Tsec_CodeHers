@@ -24,11 +24,39 @@ const seed = async () => {
 
   const passwordHash = await bcrypt.hash('Password123!', 12);
 
-  await User.insertMany([
+  const drivers = await Driver.insertMany([
+    {
+      name: 'Samuel Njoroge',
+      licenseNumber: 'DL-77821',
+      licenseCategory: 'Heavy Goods',
+      licenseExpiry: new Date('2028-04-15'),
+      phone: '+254700123456',
+      safetyScore: 98,
+      status: 'AVAILABLE',
+    },
+    {
+      name: 'Grace Mwangi',
+      licenseNumber: 'DL-66214',
+      licenseCategory: 'Light Goods',
+      licenseExpiry: new Date('2027-10-01'),
+      phone: '+254711654321',
+      safetyScore: 100,
+      status: 'ON_TRIP',
+    },
+  ]);
+
+  const users = await User.insertMany([
     { name: 'Amina Patel', email: 'amina@transitops.com', password: passwordHash, role: 'FLEET_MANAGER' },
     { name: 'Jonas Reed', email: 'jonas@transitops.com', password: passwordHash, role: 'DISPATCHER' },
     { name: 'Tariq Mensah', email: 'tariq@transitops.com', password: passwordHash, role: 'SAFETY_OFFICER' },
     { name: 'Leah Okafor', email: 'leah@transitops.com', password: passwordHash, role: 'FINANCIAL_ANALYST' },
+    { name: 'Samuel Njoroge', email: 'samuel@transitops.com', password: passwordHash, role: 'DRIVER', driver: drivers[0]._id },
+    { name: 'Grace Mwangi', email: 'grace@transitops.com', password: passwordHash, role: 'DRIVER', driver: drivers[1]._id },
+  ]);
+
+  await Promise.all([
+    Driver.findByIdAndUpdate(drivers[0]._id, { user: users[4]._id }),
+    Driver.findByIdAndUpdate(drivers[1]._id, { user: users[5]._id }),
   ]);
 
   const vehicles = await Vehicle.insertMany([
@@ -61,27 +89,6 @@ const seed = async () => {
       odometer: 141200,
       acquisitionCost: 89000,
       status: 'IN_SHOP',
-    },
-  ]);
-
-  const drivers = await Driver.insertMany([
-    {
-      name: 'Samuel Njoroge',
-      licenseNumber: 'DL-77821',
-      licenseCategory: 'Heavy Goods',
-      licenseExpiry: new Date('2028-04-15'),
-      phone: '+254700123456',
-      safetyScore: 98,
-      status: 'AVAILABLE',
-    },
-    {
-      name: 'Grace Mwangi',
-      licenseNumber: 'DL-66214',
-      licenseCategory: 'Light Goods',
-      licenseExpiry: new Date('2027-10-01'),
-      phone: '+254711654321',
-      safetyScore: 100,
-      status: 'ON_TRIP',
     },
   ]);
 

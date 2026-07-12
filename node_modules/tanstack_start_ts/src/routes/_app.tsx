@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { useAuth, roleAccess } from "@/lib/store";
+import { useAuth, roleAccess, useTransitStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_app")({
   ssr: false, // auth lives in localStorage; skip prerender for authed shell
@@ -18,6 +18,8 @@ function AppLayout() {
     if (!user && typeof window !== "undefined") {
       // Client-side redirect after hydration if session missing
       window.location.replace("/login");
+    } else if (user) {
+      useTransitStore.getState().syncWithBackend();
     }
   }, [user]);
 

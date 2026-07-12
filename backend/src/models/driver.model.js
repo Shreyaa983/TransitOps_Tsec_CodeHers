@@ -40,6 +40,11 @@ const driverSchema = new mongoose.Schema(
       enum: ['AVAILABLE', 'ON_TRIP', 'OFF_DUTY', 'SUSPENDED'],
       default: 'AVAILABLE',
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   { timestamps: true }
 );
