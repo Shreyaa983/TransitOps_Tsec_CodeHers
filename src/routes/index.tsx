@@ -1,24 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  beforeLoad: () => {
+    // Auth state lives in localStorage — checked on the client. During SSR/prerender,
+    // localStorage is unavailable, so treat as unauthenticated and let the client
+    // hydrate onto /dashboard if a session exists.
+    if (typeof window === "undefined") throw redirect({ to: "/login" });
+    try {
+      const raw = window.localStorage.getItem("transitops-auth-v1");
+      const user = raw ? JSON.parse(raw)?.state?.user : null;
+      throw redirect({ to: user ? "/dashboard" : "/login" });
+    } catch (e) {
+      if ((e as { to?: string })?.to) throw e;
+      throw redirect({ to: "/login" });
+    }
+  },
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
