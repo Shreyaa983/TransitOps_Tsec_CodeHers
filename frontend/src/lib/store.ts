@@ -34,7 +34,7 @@ type Actions = {
   addTrip: (t: Trip) => Promise<void>;
   updateTrip: (id: string, patch: Partial<Trip>) => Promise<void>;
   dispatchTrip: (id: string) => Promise<{ ok: boolean; error?: string }>;
-  completeTrip: (id: string, actualDistance?: number, fuelConsumed?: number, finalOdometer?: number) => Promise<{ ok: boolean; error?: string }>;
+  completeTrip: (id: string, actualDistance?: number, fuelConsumed?: number, finalOdometer?: number, fuelCost?: number) => Promise<{ ok: boolean; error?: string }>;
   cancelTrip: (id: string) => Promise<{ ok: boolean; error?: string }>;
 
   addMaintenance: (m: MaintenanceLog) => Promise<void>;
@@ -222,7 +222,7 @@ export const useTransitStore = create<State & Actions>()(
               description: m.description || "",
               technician: m.technician || "",
               cost: Number(m.cost ?? 0),
-              status: (m.status || "open").toLowerCase() as any,
+              status: (m.status === "CLOSED" ? "completed" : (m.status || "open").toLowerCase()) as any,
               createdAt: m.openedAt ? new Date(m.openedAt).toISOString() : new Date(m.createdAt || Date.now()).toISOString(),
               completedAt: m.closedAt ? new Date(m.closedAt).toISOString() : undefined,
             }));
@@ -406,7 +406,7 @@ export const useTransitStore = create<State & Actions>()(
         }));
         return { ok: true };
       },
-      completeTrip: async (id, actualDistance, fuelConsumed, finalOdometer) => {
+      completeTrip: async (id, actualDistance, fuelConsumed, finalOdometer, fuelCost) => {
         const trip = get().trips.find((t) => t.id === id);
         if (!trip) return { ok: false, error: "Trip not found" };
         const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
@@ -422,6 +422,7 @@ export const useTransitStore = create<State & Actions>()(
               actualDistance: actDist,
               fuelConsumed: fuel,
               finalOdometer: finalOdo,
+              fuelCost: fuelCost ?? 0,
             });
             await get().syncWithBackend();
             return { ok: true };
@@ -479,17 +480,35 @@ export const useTransitStore = create<State & Actions>()(
         set((s) => ({ maintenance: [m, ...s.maintenance] }));
       },
       updateMaintenance: (id, patch) => set((s) => ({ maintenance: s.maintenance.map((m) => (m.id === id ? { ...m, ...patch } : m)) })),
-      startMaintenance: (id) => {
+      startMaintenance: async (id) => {
         const m = get().maintenance.find((x) => x.id === id);
         if (!m) return;
+
+        if (useAuth.getState().token) {
+          try {
+            await api.patch(`/maintenance/${id}`, { status: "IN_PROGRESS" });
+            await get().syncWithBackend();
+            return;
+          } catch { }
+        }
+
         set((s) => ({
           maintenance: s.maintenance.map((x) => (x.id === id ? { ...x, status: "in_progress" } : x)),
           vehicles: s.vehicles.map((v) => (v.id === m.vehicleId ? { ...v, status: "in_shop" } : v)),
         }));
       },
-      completeMaintenance: (id) => {
+      completeMaintenance: async (id) => {
         const m = get().maintenance.find((x) => x.id === id);
         if (!m) return;
+
+        if (useAuth.getState().token) {
+          try {
+            await api.patch(`/maintenance/${id}`, { status: "CLOSED" });
+            await get().syncWithBackend();
+            return;
+          } catch { }
+        }
+
         set((s) => ({
           maintenance: s.maintenance.map((x) => (x.id === id ? { ...x, status: "completed", completedAt: new Date().toISOString() } : x)),
           vehicles: s.vehicles.map((v) => (v.id === m.vehicleId ? { ...v, status: "available" } : v)),
@@ -588,7 +607,7 @@ export const roleAccess: Record<Role, string[]> = {
   dispatcher: ["dashboard", "trips", "vehicles", "drivers", "notifications", "ai-copilot"],
   safety_officer: ["dashboard", "drivers", "vehicles", "reports", "notifications"],
   financial_analyst: ["dashboard", "fuel", "expenses", "reports", "notifications"],
-  driver: ["dashboard", "settings", "notifications", "report-incident", "ai-copilot"],
+  driver: ["dashboard", "trips", "settings", "notifications", "report-incident", "ai-copilot"],
 };
 export const roleLabel: Record<Role, string> = {
   fleet_manager: "Fleet Manager",

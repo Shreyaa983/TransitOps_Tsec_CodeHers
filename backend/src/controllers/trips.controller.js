@@ -191,6 +191,16 @@ const completeTrip = asyncHandler(async (req, res) => {
     trip.completionTime = new Date();
     await trip.save();
 
+    if (fuelConsumed > 0) {
+        const FuelLog = (await import("../models/fuelLog.model.js")).default;
+        await FuelLog.create({
+            vehicle: vehicle._id,
+            liters: fuelConsumed,
+            cost: req.body.fuelCost || 0, 
+            odometer: finalOdometer
+        });
+    }
+
     vehicle.status = "AVAILABLE";
     vehicle.odometer = finalOdometer;
     await vehicle.save();

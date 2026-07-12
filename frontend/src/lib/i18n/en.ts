@@ -376,6 +376,15 @@ export const EN_TEXTS = {
   trips_dispatching_sub: "Applying business rules.",
   trips_back_to_trip: "Back to trip",
   trips_completing: "Completing…",
+  trips_complete_title: "Complete Trip {code}",
+  trips_complete_subtitle: "Log the final closing metrics of the trip.",
+  trips_final_odometer: "Final Odometer (km)",
+  trips_current_odometer: "Current odometer: {km} km",
+  trips_actual_distance: "Actual Distance (km)",
+  trips_fuel_consumed: "Fuel Consumed (Liters)",
+  trips_fuel_cost: "Fuel Cost ($) (Optional)",
+  trips_confirm_complete: "Confirm & Complete Trip",
+
 
   // Maintenance
   maint_title: "Maintenance",
