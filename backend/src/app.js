@@ -1,9 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import apiRoutes from './routes/index.js';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
+
+// ESM-safe __dirname
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 
 const app = express();
 
@@ -23,6 +29,10 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
+
+// Serve static files (AI Incident Analyzer UI at /index.html)
+app.use(express.static(path.join(__dirname, 'ai', 'demo')));
+
 
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ success: true, message: 'TransitOps API is running' });

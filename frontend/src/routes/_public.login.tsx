@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Truck, ArrowRight } from "lucide-react";
 import { useAuth, type Role } from "@/lib/store";
 import { api } from "@/lib/api";
@@ -7,10 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import Lottie from "lottie-react";
-import warehouseDeliveryAnimation from "../lib/warehouse-delivery.json";
-
-const LottieComponent = (Lottie as any).default || Lottie;
 
 export const Route = createFileRoute("/_public/login")({
   head: () => ({ meta: [{ title: "Sign in — TransitOps" }] }),
@@ -32,11 +28,6 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const setAuth = useAuth((s) => s.setAuth);
   const nav = useNavigate();
-
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,12 +145,7 @@ function LoginPage() {
       <div className="hidden lg:flex items-center justify-center relative bg-gradient-to-br from-primary via-primary to-secondary p-12 overflow-hidden">
         <div className="absolute inset-0 opacity-20"
           style={{ backgroundImage: "radial-gradient(circle at 20% 30%, white 0, transparent 40%), radial-gradient(circle at 80% 70%, white 0, transparent 40%)" }} />
-        <div className="relative max-w-md text-primary-foreground flex flex-col items-start">
-          <div className="w-full max-w-[420px] mb-6 self-center lg:self-start mix-blend-lighten opacity-95">
-            {isMounted && (
-              <LottieComponent animationData={warehouseDeliveryAnimation} loop={true} />
-            )}
-          </div>
+        <div className="relative max-w-md text-primary-foreground">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-xs font-semibold">
             <Truck className="h-3.5 w-3.5" /> Fleet ops, reimagined
           </div>

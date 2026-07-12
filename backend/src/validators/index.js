@@ -163,3 +163,17 @@ export const expenseUpdateValidators = [
   optionalText('description'),
   optionalDate('date'),
 ];
+
+export const incidentCreateValidators = [
+  body('driver').isMongoId().withMessage('driver must be a valid id'),
+  body('vehicle').isMongoId().withMessage('vehicle must be a valid id'),
+  requiredText('observation'),
+  body('status').optional().isIn(['PENDING', 'APPROVED', 'REJECTED', 'RESOLVED']).withMessage('Invalid status')
+];
+
+export const incidentUpdateValidators = [
+  body('driver').optional().isMongoId().withMessage('driver must be a valid id'),
+  body('vehicle').optional().isMongoId().withMessage('vehicle must be a valid id'),
+  optionalText('observation'),
+  body('status').optional().isIn(['PENDING', 'APPROVED', 'REJECTED', 'RESOLVED']).withMessage('Invalid status')
+];

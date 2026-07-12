@@ -1,14 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTransitStore } from "@/lib/store";
-import { tripsApi, type TripStatus } from "@/lib/trips-api";
 import { Plus, Search, MapPin, ArrowRight } from "lucide-react";
 import { kg, shortDate, km } from "@/lib/format";
+import type { TripStatus } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/_app/trips/")({
   head: () => ({ meta: [{ title: "Trips — TransitOps" }] }),
@@ -18,24 +17,11 @@ export const Route = createFileRoute("/_app/trips/")({
 const statuses: (TripStatus | "all")[] = ["all", "draft", "dispatched", "completed", "cancelled"];
 
 function TripsPage() {
-  const { vehicles, drivers } = useTransitStore();
+  const { trips, vehicles, drivers } = useTransitStore();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<TripStatus | "all">("all");
 
-  const { data: trips = [], isLoading, isError } = useQuery({
-    queryKey: ["trips", filter],
-    queryFn: () => {
-      switch (filter) {
-        case "draft": return tripsApi.getDrafts();
-        case "dispatched": return tripsApi.getActive();
-        case "completed": return tripsApi.getCompleted();
-        case "cancelled": return tripsApi.getCancelled();
-        default: return tripsApi.list();
-      }
-    },
-  });
-
-  const rows = trips.filter((t) => !q || `${t.code} ${t.source} ${t.destination}`.toLowerCase().includes(q.toLowerCase()));
+  const rows = trips.filter((t) => (filter === "all" || t.status === filter) && (!q || `${t.code} ${t.source} ${t.destination}`.toLowerCase().includes(q.toLowerCase())));
 
   return (
     <div>
@@ -64,9 +50,6 @@ function TripsPage() {
           ))}
         </div>
       </div>
-
-      {isLoading && <div className="text-sm text-muted-foreground">Loading trips…</div>}
-      {isError && <div className="text-sm text-destructive">Failed to load trips. Make sure you are signed in and the backend is running.</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {rows.map((t) => {

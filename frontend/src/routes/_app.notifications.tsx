@@ -11,10 +11,10 @@ export const Route = createFileRoute("/_app/notifications")({
   component: () => {
     const { notifications, markAllNotificationsRead, markNotificationRead } = useTransitStore();
     return (
-      <div>
+      <div className="pb-20">
         <PageHeader title="Notification center" subtitle={`${notifications.filter((n) => !n.read).length} unread`}
           actions={<Button onClick={markAllNotificationsRead} className="brutal-btn bg-card"><CheckCheck className="h-4 w-4 mr-1" /> Mark all read</Button>} />
-        <div className="space-y-2 max-w-3xl">
+        <div className="space-y-4 max-w-3xl">
           {notifications.map((n) => (
             <button key={n.id} onClick={() => markNotificationRead(n.id)} className={cn("w-full text-left brutal-card p-4 flex items-start gap-3", !n.read && "brutal-card-hover")}>
               <span className={cn("mt-1 h-2.5 w-2.5 rounded-full shrink-0",

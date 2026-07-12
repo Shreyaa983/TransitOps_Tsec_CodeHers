@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Truck, Users, Route, Wrench, Fuel, Receipt, BarChart3, Sparkles, Bell, Settings, ChevronsLeft, ChevronsRight,
+  LayoutDashboard, Truck, Users, Route, Wrench, Fuel, Receipt, BarChart3, Sparkles, Bell, Settings, ChevronsLeft, ChevronsRight, AlertTriangle,
 } from "lucide-react";
 import { useAuth, useUI, roleAccess } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,8 @@ const items = [
   { key: "fuel", to: "/fuel", icon: Fuel, label: "Fuel" },
   { key: "expenses", to: "/expenses", icon: Receipt, label: "Expenses" },
   { key: "reports", to: "/reports", icon: BarChart3, label: "Reports & Analytics" },
+  { key: "incidents", to: "/incidents", icon: AlertTriangle, label: "Review Incidents" },
+  { key: "report-incident", to: "/report-incident", icon: AlertTriangle, label: "Report Incident" },
   { key: "ai-copilot", to: "/ai-copilot", icon: Sparkles, label: "AI Copilot" },
   { key: "notifications", to: "/notifications", icon: Bell, label: "Notifications" },
   { key: "settings", to: "/settings", icon: Settings, label: "Settings" },

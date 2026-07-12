@@ -14,6 +14,7 @@ type State = {
   fuel: FuelLog[];
   expenses: Expense[];
   notifications: Notification[];
+  pendingIncidents: any[];
 };
 
 type Actions = {
@@ -55,6 +56,7 @@ const initial: State = {
   fuel: seedFuel,
   expenses: seedExpenses,
   notifications: seedNotifications,
+  pendingIncidents: [],
 };
 
 export const useTransitStore = create<State & Actions>()(
@@ -78,7 +80,7 @@ export const useTransitStore = create<State & Actions>()(
               status: v.status.toUpperCase(),
             });
             await get().syncWithBackend();
-          } catch {}
+          } catch { }
         }
       },
       updateVehicle: async (id, patch) => {
@@ -96,7 +98,7 @@ export const useTransitStore = create<State & Actions>()(
             if (patch.status !== undefined) backendPatch.status = patch.status.toUpperCase();
             await api.patch(`/vehicles/${id}`, backendPatch);
             await get().syncWithBackend();
-          } catch {}
+          } catch { }
         }
       },
       deleteVehicle: async (id) => {
@@ -104,7 +106,7 @@ export const useTransitStore = create<State & Actions>()(
         if (useAuth.getState().token) {
           try {
             await api.delete(`/vehicles/${id}`);
-          } catch {}
+          } catch { }
         }
       },
 
@@ -131,10 +133,13 @@ export const useTransitStore = create<State & Actions>()(
       syncWithBackend: async () => {
         if (!useAuth.getState().token) return;
         try {
-          const [resVehicles, resDrivers, resTrips] = await Promise.all([
+          const [resVehicles, resDrivers, resTrips, resIncidents] = await Promise.all([
             api.get<{ success: boolean; data: any[] }>("/vehicles").catch(() => null),
             api.get<{ success: boolean; data: any[] }>("/drivers").catch(() => null),
             api.get<{ success: boolean; data: any[] }>("/trips").catch(() => null),
+            useAuth.getState().user?.role === 'fleet_manager'
+              ? api.get<{ success: boolean; data: any[] }>("/incidents?status=PENDING").catch(() => null)
+              : Promise.resolve(null),
           ]);
 
           if (resVehicles && resVehicles.data && Array.isArray(resVehicles.data)) {
@@ -186,9 +191,11 @@ export const useTransitStore = create<State & Actions>()(
               fuelUsedL: t.fuelConsumed || t.fuelUsedL || 0,
               costUSD: t.costUSD || 0,
             }));
-            if (mappedTrips.length > 0) {
-              set({ trips: mappedTrips });
-            }
+            set({ trips: mappedTrips });
+          }
+
+          if (resIncidents && resIncidents.data && Array.isArray(resIncidents.data)) {
+            set({ pendingIncidents: resIncidents.data });
           }
         } catch {
           // Ignore network sync errors
@@ -209,7 +216,7 @@ export const useTransitStore = create<State & Actions>()(
               status: "DRAFT",
             });
             await get().syncWithBackend();
-          } catch {}
+          } catch { }
         }
       },
       updateTrip: async (id, patch) => {
@@ -225,7 +232,7 @@ export const useTransitStore = create<State & Actions>()(
             if (patch.distanceKm !== undefined) backendPatch.plannedDistance = patch.distanceKm;
             await api.patch(`/trips/${id}`, backendPatch);
             await get().syncWithBackend();
-          } catch {}
+          } catch { }
         }
       },
 
@@ -382,11 +389,11 @@ export const useUI = create<UIState>()(
 
 // Role → allowed top-level sections
 export const roleAccess: Record<Role, string[]> = {
-  fleet_manager: ["dashboard", "vehicles", "drivers", "trips", "maintenance", "fuel", "expenses", "reports", "ai-copilot", "notifications", "settings"],
+  fleet_manager: ["dashboard", "vehicles", "drivers", "trips", "maintenance", "fuel", "expenses", "reports", "incidents", "ai-copilot", "notifications", "settings"],
   dispatcher: ["dashboard", "vehicles", "drivers", "trips", "reports", "notifications", "ai-copilot", "settings"],
   safety_officer: ["dashboard", "drivers", "maintenance", "reports", "notifications", "settings"],
   financial_analyst: ["dashboard", "fuel", "expenses", "reports", "notifications", "settings"],
-  driver: ["dashboard", "vehicles", "trips", "maintenance", "fuel", "notifications", "settings"],
+  driver: ["dashboard", "vehicles", "trips", "maintenance", "report-incident", "fuel", "notifications", "settings"],
 };
 export const roleLabel: Record<Role, string> = {
   fleet_manager: "Fleet Manager",

@@ -18,8 +18,10 @@ import { Route as AppVehiclesRouteImport } from './routes/_app.vehicles'
 import { Route as AppTripsRouteImport } from './routes/_app.trips'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppReportIncidentRouteImport } from './routes/_app.report-incident'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMaintenanceRouteImport } from './routes/_app.maintenance'
+import { Route as AppIncidentsRouteImport } from './routes/_app.incidents'
 import { Route as AppFuelRouteImport } from './routes/_app.fuel'
 import { Route as AppExpensesRouteImport } from './routes/_app.expenses'
 import { Route as AppDriversRouteImport } from './routes/_app.drivers'
@@ -112,6 +114,11 @@ const AppReportsRoute = AppReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReportIncidentRoute = AppReportIncidentRouteImport.update({
+  id: '/report-incident',
+  path: '/report-incident',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -120,6 +127,11 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
 const AppMaintenanceRoute = AppMaintenanceRouteImport.update({
   id: '/maintenance',
   path: '/maintenance',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIncidentsRoute = AppIncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFuelRoute = AppFuelRouteImport.update({
@@ -375,8 +387,10 @@ export interface FileRoutesByFullPath {
   '/drivers': typeof AppDriversRouteWithChildren
   '/expenses': typeof AppExpensesRouteWithChildren
   '/fuel': typeof AppFuelRouteWithChildren
+  '/incidents': typeof AppIncidentsRoute
   '/maintenance': typeof AppMaintenanceRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
+  '/report-incident': typeof AppReportIncidentRoute
   '/reports': typeof AppReportsRouteWithChildren
   '/settings': typeof AppSettingsRouteWithChildren
   '/trips': typeof AppTripsRouteWithChildren
@@ -431,7 +445,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-copilot': typeof AppAiCopilotRoute
   '/dashboard': typeof AppDashboardRoute
+  '/incidents': typeof AppIncidentsRoute
   '/notifications': typeof AppNotificationsRoute
+  '/report-incident': typeof AppReportIncidentRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/drivers/new': typeof AppDriversNewRoute
@@ -487,8 +503,10 @@ export interface FileRoutesById {
   '/_app/drivers': typeof AppDriversRouteWithChildren
   '/_app/expenses': typeof AppExpensesRouteWithChildren
   '/_app/fuel': typeof AppFuelRouteWithChildren
+  '/_app/incidents': typeof AppIncidentsRoute
   '/_app/maintenance': typeof AppMaintenanceRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/report-incident': typeof AppReportIncidentRoute
   '/_app/reports': typeof AppReportsRouteWithChildren
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/trips': typeof AppTripsRouteWithChildren
@@ -548,8 +566,10 @@ export interface FileRouteTypes {
     | '/drivers'
     | '/expenses'
     | '/fuel'
+    | '/incidents'
     | '/maintenance'
     | '/notifications'
+    | '/report-incident'
     | '/reports'
     | '/settings'
     | '/trips'
@@ -604,7 +624,9 @@ export interface FileRouteTypes {
     | '/'
     | '/ai-copilot'
     | '/dashboard'
+    | '/incidents'
     | '/notifications'
+    | '/report-incident'
     | '/forgot-password'
     | '/login'
     | '/drivers/new'
@@ -659,8 +681,10 @@ export interface FileRouteTypes {
     | '/_app/drivers'
     | '/_app/expenses'
     | '/_app/fuel'
+    | '/_app/incidents'
     | '/_app/maintenance'
     | '/_app/notifications'
+    | '/_app/report-incident'
     | '/_app/reports'
     | '/_app/settings'
     | '/_app/trips'
@@ -783,6 +807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReportsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/report-incident': {
+      id: '/_app/report-incident'
+      path: '/report-incident'
+      fullPath: '/report-incident'
+      preLoaderRoute: typeof AppReportIncidentRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/notifications': {
       id: '/_app/notifications'
       path: '/notifications'
@@ -795,6 +826,13 @@ declare module '@tanstack/react-router' {
       path: '/maintenance'
       fullPath: '/maintenance'
       preLoaderRoute: typeof AppMaintenanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/incidents': {
+      id: '/_app/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof AppIncidentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/fuel': {
@@ -1348,8 +1386,10 @@ interface AppRouteChildren {
   AppDriversRoute: typeof AppDriversRouteWithChildren
   AppExpensesRoute: typeof AppExpensesRouteWithChildren
   AppFuelRoute: typeof AppFuelRouteWithChildren
+  AppIncidentsRoute: typeof AppIncidentsRoute
   AppMaintenanceRoute: typeof AppMaintenanceRouteWithChildren
   AppNotificationsRoute: typeof AppNotificationsRoute
+  AppReportIncidentRoute: typeof AppReportIncidentRoute
   AppReportsRoute: typeof AppReportsRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppTripsRoute: typeof AppTripsRouteWithChildren
@@ -1362,8 +1402,10 @@ const AppRouteChildren: AppRouteChildren = {
   AppDriversRoute: AppDriversRouteWithChildren,
   AppExpensesRoute: AppExpensesRouteWithChildren,
   AppFuelRoute: AppFuelRouteWithChildren,
+  AppIncidentsRoute: AppIncidentsRoute,
   AppMaintenanceRoute: AppMaintenanceRouteWithChildren,
   AppNotificationsRoute: AppNotificationsRoute,
+  AppReportIncidentRoute: AppReportIncidentRoute,
   AppReportsRoute: AppReportsRouteWithChildren,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppTripsRoute: AppTripsRouteWithChildren,

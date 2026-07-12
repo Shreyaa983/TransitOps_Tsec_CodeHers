@@ -13,7 +13,8 @@ export function AppTopbar() {
   const { theme, setTheme } = useUI();
   const notifications = useTransitStore((s) => s.notifications);
   const markAll = useTransitStore((s) => s.markAllNotificationsRead);
-  const unread = notifications.filter((n) => !n.read).length;
+  const pendingIncidentsCount = useTransitStore((s) => s.pendingIncidents.length);
+  const unread = notifications.filter((n) => !n.read).length + (user?.role === "fleet_manager" ? pendingIncidentsCount : 0);
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -82,6 +83,15 @@ export function AppTopbar() {
                 <p className="text-xs text-muted-foreground mt-1">{n.body}</p>
               </div>
             ))}
+            {user?.role === "fleet_manager" && pendingIncidentsCount > 0 && (
+              <div onClick={() => nav({ to: "/incidents" })} className="rounded-xl border-2 border-border bg-danger/10 brutal-shadow-sm p-3 cursor-pointer transition-colors hover:bg-danger/20">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                  <div className="text-sm font-semibold text-danger">Pending Incident Reports</div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">You have {pendingIncidentsCount} new AI incident reports pending review.</p>
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>

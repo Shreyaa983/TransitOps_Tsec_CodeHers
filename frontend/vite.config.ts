@@ -50,12 +50,12 @@ export default defineConfig(async ({ command, mode }): Promise<UserConfig> => {
     plugins,
     ...(isDevBuild
       ? {
-          environments: {
-            client: {
-              define: { "process.env.NODE_ENV": JSON.stringify("development") },
-            },
+        environments: {
+          client: {
+            define: { "process.env.NODE_ENV": JSON.stringify("development") },
           },
-        }
+        },
+      }
       : {}),
     css: { transformer: "lightningcss" },
     resolve: {

@@ -79,6 +79,8 @@ export type Notification = {
   level: "info" | "warning" | "danger" | "success";
   read: boolean;
   createdAt: string;
+  actionType?: string;
+  incidentPayload?: any;
 };
 
 const iso = (d: Date) => d.toISOString();
