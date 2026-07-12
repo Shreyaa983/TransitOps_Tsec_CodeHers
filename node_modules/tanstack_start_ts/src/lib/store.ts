@@ -141,15 +141,18 @@ export type AuthUser = { email: string; name: string; role: Role };
 
 type AuthState = {
   user: AuthUser | null;
-  login: (email: string, password: string, role: Role, name?: string) => void;
+  token: string | null;
+  /** Called after a successful backend login — stores the real user + JWT. */
+  setAuth: (user: AuthUser, token: string) => void;
   logout: () => void;
 };
 export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      login: (email, _password, role, name) => set({ user: { email, name: name ?? email.split("@")[0], role } }),
-      logout: () => set({ user: null }),
+      token: null,
+      setAuth: (user, token) => set({ user, token }),
+      logout: () => set({ user: null, token: null }),
     }),
     { name: "transitops-auth-v1" },
   ),
