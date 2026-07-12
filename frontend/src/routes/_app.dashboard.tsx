@@ -1,13 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Truck, CheckCircle2, Wrench, Route as RouteIcon, Clock, Users, Activity, TrendingUp, AlertTriangle, Sparkles, Fuel } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, CartesianGrid } from "recharts";
-import { useTransitStore, useAuth, type AuthUser } from "@/lib/store";
+import {
+  Truck, CheckCircle2, Wrench, Route as RouteIcon, Clock, Users, Activity,
+  TrendingUp, AlertTriangle, Sparkles, Fuel, Filter, Loader2,
+} from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell, CartesianGrid,
+} from "recharts";
+import { useAuth, type AuthUser } from "@/lib/store";
 import { driversApi, type DriverStatus } from "@/lib/drivers-api";
+import {
+  dashboardApi,
+  type DashboardFilters,
+  type OperationsDashboard,
+} from "@/lib/dashboard-api";
 import { PageHeader } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
-import { daysUntil, money } from "@/lib/format";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { daysUntil } from "@/lib/format";
 import { toast } from "sonner";
 
 const DRIVER_STATUS_OPTIONS: { value: DriverStatus; label: string }[] = [
@@ -16,67 +31,76 @@ const DRIVER_STATUS_OPTIONS: { value: DriverStatus; label: string }[] = [
   { value: "OFF_DUTY", label: "Off Duty" },
 ];
 
+const INSIGHT_ICONS: Record<string, string> = {
+  warning: "⚠",
+  primary: "🚛",
+  success: "📈",
+  danger: "👤",
+};
+
+const PIE_COLORS = ["var(--primary)", "var(--success)", "var(--warning)", "var(--muted-foreground)"];
+
+const VEHICLE_STATUS_LABELS: Record<string, string> = {
+  AVAILABLE: "Available",
+  ON_TRIP: "On Trip",
+  IN_SHOP: "In Shop",
+  RETIRED: "Retired",
+};
+
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TransitOps" }] }),
   component: DashboardPage,
 });
 
 function DashboardPage() {
-  const { vehicles, drivers, trips, maintenance, expenses } = useTransitStore();
   const user = useAuth((s) => s.user);
 
   if (user?.role === "driver") {
     return <DriverConsole user={user} />;
   }
 
-  const kpis = [
-    { label: "Active Vehicles", value: vehicles.filter((v) => v.status !== "retired").length, icon: Truck, tone: "primary" },
-    { label: "Available", value: vehicles.filter((v) => v.status === "available").length, icon: CheckCircle2, tone: "success" },
-    { label: "In Maintenance", value: vehicles.filter((v) => v.status === "in_shop").length, icon: Wrench, tone: "warning" },
-    { label: "Active Trips", value: trips.filter((t) => t.status === "dispatched").length, icon: RouteIcon, tone: "primary" },
-    { label: "Pending Trips", value: trips.filter((t) => t.status === "draft").length, icon: Clock, tone: "muted" },
-    { label: "Drivers On Duty", value: drivers.filter((d) => d.status === "on_duty").length, icon: Users, tone: "success" },
-    {
-      label: "Fleet Utilization",
-      value: `${Math.round((vehicles.filter((v) => v.status === "on_trip").length / Math.max(vehicles.filter((v) => v.status !== "retired").length, 1)) * 100)}%`,
-      icon: Activity, tone: "secondary",
-    },
-  ];
+  return <OperationsDashboardView />;
+}
 
-  const utilData = [
-    { name: "On Trip", value: vehicles.filter((v) => v.status === "on_trip").length },
-    { name: "Available", value: vehicles.filter((v) => v.status === "available").length },
-    { name: "In Shop", value: vehicles.filter((v) => v.status === "in_shop").length },
-    { name: "Retired", value: vehicles.filter((v) => v.status === "retired").length },
-  ];
-  const pieColors = ["var(--primary)", "var(--success)", "var(--warning)", "var(--muted-foreground)"];
+function OperationsDashboardView() {
+  const [filters, setFilters] = useState<DashboardFilters>({});
 
-  const tripStatus = [
-    { name: "Draft", value: trips.filter((t) => t.status === "draft").length },
-    { name: "Dispatched", value: trips.filter((t) => t.status === "dispatched").length },
-    { name: "Completed", value: trips.filter((t) => t.status === "completed").length },
-    { name: "Cancelled", value: trips.filter((t) => t.status === "cancelled").length },
-  ];
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["dashboard", filters],
+    queryFn: () => dashboardApi.getOperations(filters),
+    staleTime: 30_000,
+  });
 
-  const fuelWeekly = [
-    { day: "Mon", litres: 420 }, { day: "Tue", litres: 380 }, { day: "Wed", litres: 510 },
-    { day: "Thu", litres: 490 }, { day: "Fri", litres: 620 }, { day: "Sat", litres: 340 }, { day: "Sun", litres: 210 },
-  ];
-  const monthlyExpenses = [
-    { m: "Jun", v: 12400 }, { m: "Jul", v: 13800 }, { m: "Aug", v: 11900 },
-    { m: "Sep", v: 14200 }, { m: "Oct", v: 15100 }, { m: "Nov", v: 13650 },
-  ];
+  const updateFilter = (key: keyof DashboardFilters, value: string) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (!value || value === "all") {
+        delete next[key];
+      } else {
+        next[key] = value;
+      }
+      return next;
+    });
+  };
 
-  const expiring = drivers.filter((d) => daysUntil(d.licenseExpiry) <= 15);
-  const inShop = vehicles.filter((v) => v.status === "in_shop");
-  const upcomingMx = maintenance.filter((m) => m.status !== "completed").slice(0, 4);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Loading dashboard…
+      </div>
+    );
+  }
 
-  const insights = [
-    { icon: "⚠", tone: "warning", text: "Fuel consumption increased 12% this week." },
-    { icon: "🚛", tone: "primary", text: "Van-07 may require maintenance soon." },
-    { icon: "📈", tone: "success", text: "Fleet utilization improved by 9%." },
-    { icon: "👤", tone: "danger", text: `${expiring.length} driver license${expiring.length === 1 ? "" : "s"} expire within 15 days.` },
-  ];
+  if (error || !data) {
+    return (
+      <div className="brutal-card p-8 text-center text-destructive">
+        {error instanceof Error ? error.message : "Failed to load dashboard data."}
+      </div>
+    );
+  }
+
+  const kpis = buildKpiCards(data);
 
   return (
     <div>
@@ -85,7 +109,14 @@ function DashboardPage() {
         subtitle="Live overview of your fleet, drivers, and trips."
       />
 
-      {/* KPI cards */}
+      <DashboardFiltersBar
+        data={data}
+        filters={filters}
+        isFetching={isFetching}
+        onFilterChange={updateFilter}
+        onClear={() => setFilters({})}
+      />
+
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-6">
         {kpis.map((k, i) => (
           <motion.div
@@ -104,20 +135,20 @@ function DashboardPage() {
         ))}
       </div>
 
-      {/* AI Insights */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
-        {insights.map((i) => (
-          <div key={i.text} className="brutal-card p-4 flex items-start gap-3">
-            <div className="text-xl">{i.icon}</div>
+        {data.insights.map((insight) => (
+          <div key={insight.text} className="brutal-card p-4 flex items-start gap-3">
+            <div className="text-xl">{INSIGHT_ICONS[insight.tone] ?? "💡"}</div>
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1"><Sparkles className="h-3 w-3" /> AI Insight</div>
-              <div className="text-sm font-medium mt-1">{i.text}</div>
+              <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                <Sparkles className="h-3 w-3" /> Insight
+              </div>
+              <div className="text-sm font-medium mt-1">{insight.text}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="brutal-card p-5 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
@@ -127,17 +158,26 @@ function DashboardPage() {
           <div className="h-52">
             <ResponsiveContainer>
               <PieChart>
-                <Pie data={utilData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={2}>
-                  {utilData.map((_, i) => <Cell key={i} fill={pieColors[i]} />)}
+                <Pie
+                  data={data.charts.fleetUtilization}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={45}
+                  outerRadius={75}
+                  paddingAngle={2}
+                >
+                  {data.charts.fleetUtilization.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i]} />
+                  ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-            {utilData.map((u, i) => (
+            {data.charts.fleetUtilization.map((u, i) => (
               <div key={u.name} className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: pieColors[i] }} />
+                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PIE_COLORS[i] }} />
                 <span className="text-muted-foreground">{u.name}</span>
                 <span className="ml-auto font-semibold">{u.value}</span>
               </div>
@@ -149,7 +189,7 @@ function DashboardPage() {
           <h3 className="font-bold mb-3">Trip Status</h3>
           <div className="h-52">
             <ResponsiveContainer>
-              <BarChart data={tripStatus}>
+              <BarChart data={data.charts.tripStatus}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="name" fontSize={11} />
                 <YAxis fontSize={11} />
@@ -167,7 +207,7 @@ function DashboardPage() {
           </div>
           <div className="h-52">
             <ResponsiveContainer>
-              <LineChart data={fuelWeekly}>
+              <LineChart data={data.charts.fuelWeekly}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="day" fontSize={11} />
                 <YAxis fontSize={11} />
@@ -184,50 +224,58 @@ function DashboardPage() {
           <h3 className="font-bold mb-3">Monthly Expenses</h3>
           <div className="h-56">
             <ResponsiveContainer>
-              <BarChart data={monthlyExpenses}>
+              <BarChart data={data.charts.monthlyExpenses}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="m" fontSize={11} />
+                <XAxis dataKey="month" fontSize={11} />
                 <YAxis fontSize={11} tickFormatter={(v) => `$${v / 1000}k`} />
-                <Tooltip formatter={(v: number) => money(v)} />
-                <Bar dataKey="v" radius={[6, 6, 0, 0]} fill="var(--secondary)" />
+                <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
+                <Bar dataKey="amount" radius={[6, 6, 0, 0]} fill="var(--secondary)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="brutal-card p-5">
-          <h3 className="font-bold mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-warning" /> Alerts</h3>
+          <h3 className="font-bold mb-3 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning" /> Alerts
+          </h3>
           <ul className="space-y-3 text-sm">
-            {expiring.slice(0, 3).map((d) => (
+            {data.alerts.expiringLicenses.map((d) => (
               <li key={d.id} className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold">{d.name}</div>
-                  <div className="text-xs text-muted-foreground">License expires in {daysUntil(d.licenseExpiry)}d</div>
+                  <div className="text-xs text-muted-foreground">
+                    License expires in {daysUntil(d.licenseExpiry)}d
+                  </div>
                 </div>
                 <StatusBadge status={d.status} />
               </li>
             ))}
-            {inShop.map((v) => (
+            {data.alerts.vehiclesInShop.map((v) => (
               <li key={v.id} className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold">{v.name}</div>
-                  <div className="text-xs text-muted-foreground">{v.registration} · in maintenance</div>
+                  <div className="text-xs text-muted-foreground">
+                    {v.registration} · in maintenance
+                  </div>
                 </div>
-                <StatusBadge status="in_shop" />
+                <StatusBadge status="IN_SHOP" />
               </li>
             ))}
-            {upcomingMx.map((m) => {
-              const v = vehicles.find((x) => x.id === m.vehicleId);
-              return (
-                <li key={m.id} className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-semibold">{v?.name ?? "Vehicle"}</div>
-                    <div className="text-xs text-muted-foreground">{m.issue}</div>
-                  </div>
-                  <StatusBadge status={m.status} />
-                </li>
-              );
-            })}
+            {data.alerts.openMaintenance.map((m) => (
+              <li key={m.id} className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-semibold">{m.vehicleName}</div>
+                  <div className="text-xs text-muted-foreground">{m.issue}</div>
+                </div>
+                <StatusBadge status="open" />
+              </li>
+            ))}
+            {data.alerts.expiringLicenses.length === 0 &&
+              data.alerts.vehiclesInShop.length === 0 &&
+              data.alerts.openMaintenance.length === 0 && (
+                <li className="text-xs text-muted-foreground text-center py-4">No active alerts.</li>
+              )}
           </ul>
           <Link to="/notifications" className="block text-center text-xs font-semibold text-primary hover:underline mt-4">
             View all alerts →
@@ -235,66 +283,188 @@ function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent activity */}
       <div className="brutal-card p-5 mt-6">
         <h3 className="font-bold mb-4">Recent activity</h3>
         <ol className="relative border-l-2 border-border-soft ml-3 space-y-4 pl-6">
-          {trips.slice(0, 6).map((t) => {
-            const v = vehicles.find((x) => x.id === t.vehicleId);
-            return (
-              <li key={t.id} className="relative">
-                <span className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-primary brutal-border" />
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold">
-                      Trip {t.code} · {t.source} → {t.destination}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {v?.name ?? "—"} · {t.distanceKm} km · {money(t.costUSD ?? 0)}
-                    </div>
+          {data.recentActivity.map((t) => (
+            <li key={t.id} className="relative">
+              <span className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-primary brutal-border" />
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold">
+                    Trip {t.code} · {t.source} → {t.destination}
                   </div>
-                  <StatusBadge status={t.status} />
+                  <div className="text-xs text-muted-foreground">
+                    {t.vehicleName} · {t.driverName} · {t.distanceKm} km
+                  </div>
                 </div>
-              </li>
-            );
-          })}
+                <StatusBadge status={t.status.toLowerCase()} />
+              </div>
+            </li>
+          ))}
+          {data.recentActivity.length === 0 && (
+            <li className="text-xs text-muted-foreground">No recent trips match the current filters.</li>
+          )}
         </ol>
       </div>
     </div>
   );
 }
 
+function DashboardFiltersBar({
+  data,
+  filters,
+  isFetching,
+  onFilterChange,
+  onClear,
+}: {
+  data: OperationsDashboard;
+  filters: DashboardFilters;
+  isFetching: boolean;
+  onFilterChange: (key: keyof DashboardFilters, value: string) => void;
+  onClear: () => void;
+}) {
+  const hasFilters = Boolean(filters.vehicleType || filters.vehicleStatus || filters.region);
+
+  return (
+    <div className="brutal-card p-4 mb-6 flex flex-col lg:flex-row lg:items-end gap-3">
+      <div className="flex items-center gap-2 text-sm font-bold">
+        <Filter className="h-4 w-4" />
+        Filters
+        {isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+        <div className="space-y-1">
+          <label className="text-[11px] font-semibold text-muted-foreground">Vehicle type</label>
+          <Select
+            value={filters.vehicleType ?? "all"}
+            onValueChange={(v) => onFilterChange("vehicleType", v)}
+          >
+            <SelectTrigger className="brutal-border bg-card">
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All types</SelectItem>
+              {data.filters.vehicleTypes.map((type) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[11px] font-semibold text-muted-foreground">Vehicle status</label>
+          <Select
+            value={filters.vehicleStatus ?? "all"}
+            onValueChange={(v) => onFilterChange("vehicleStatus", v)}
+          >
+            <SelectTrigger className="brutal-border bg-card">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {data.filters.vehicleStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {VEHICLE_STATUS_LABELS[status] ?? status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[11px] font-semibold text-muted-foreground">Depot / Region</label>
+          <Select
+            value={filters.region ?? "all"}
+            onValueChange={(v) => onFilterChange("region", v)}
+          >
+            <SelectTrigger className="brutal-border bg-card">
+              <SelectValue placeholder="All regions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All regions</SelectItem>
+              {data.filters.regions.map((region) => (
+                <SelectItem key={region} value={region}>{region}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {hasFilters && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="brutal-btn px-3 py-2 text-xs font-bold bg-card hover:bg-accent"
+        >
+          Clear filters
+        </button>
+      )}
+    </div>
+  );
+}
+
+function buildKpiCards(data: OperationsDashboard) {
+  const { kpis } = data;
+  return [
+    { label: "Active Vehicles", value: kpis.activeVehicles, icon: Truck, tone: "primary" },
+    { label: "Available", value: kpis.availableVehicles, icon: CheckCircle2, tone: "success" },
+    { label: "In Maintenance", value: kpis.vehiclesInMaintenance, icon: Wrench, tone: "warning" },
+    { label: "Active Trips", value: kpis.activeTrips, icon: RouteIcon, tone: "primary" },
+    { label: "Pending Trips", value: kpis.pendingTrips, icon: Clock, tone: "muted" },
+    { label: "Drivers On Duty", value: kpis.driversOnDuty, icon: Users, tone: "success" },
+    { label: "Fleet Utilization", value: `${kpis.fleetUtilizationPct}%`, icon: Activity, tone: "secondary" },
+  ];
+}
+
 function DriverConsole({ user }: { user: AuthUser }) {
-  const { vehicles, trips } = useTransitStore();
   const qc = useQueryClient();
 
-  const { data: driver, isLoading } = useQuery({
-    queryKey: ["drivers", "me", user.driverId],
-    queryFn: () => driversApi.getOne(user.driverId!),
-    enabled: !!user.driverId,
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["dashboard", "driver"],
+    queryFn: () => dashboardApi.getDriver(),
+    enabled: !!user,
   });
+
+  const driver = data?.driver;
+  const myTrips = data?.trips ?? [];
+  const assignedVehicle = data?.assignedVehicle;
 
   const statusMutation = useMutation({
     mutationFn: (status: DriverStatus) => driversApi.updateMyStatus(status),
     onSuccess: (updated) => {
-      qc.setQueryData(["drivers", "me", user.driverId], updated);
-      if (user.driverId) qc.setQueryData(["drivers", user.driverId], updated);
+      qc.invalidateQueries({ queryKey: ["dashboard", "driver"] });
       qc.invalidateQueries({ queryKey: ["drivers"] });
       toast.success(`Status updated to ${updated.status.replace("_", " ")}`);
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to update status"),
   });
 
-  const myTrips = trips.filter((t) => t.driverId === driver?.id);
-  const currentTrip = myTrips.find((t) => t.status === "dispatched" || t.status === "draft");
-  const assignedVehicle = vehicles.find((v) => v.id === currentTrip?.vehicleId || v.status === "on_trip");
-
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading your driver profile…</div>;
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground py-10">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading your driver dashboard…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="brutal-card p-8 text-center text-destructive">
+        {error instanceof Error ? error.message : "Failed to load your dashboard."}
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="My dashboard"
+        subtitle="Your assigned trips and vehicle details only."
+      />
+
       <div className="brutal-card bg-gradient-to-r from-primary/15 via-primary/5 to-background p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -307,7 +477,14 @@ function DriverConsole({ user }: { user: AuthUser }) {
                 {driver && <StatusBadge status={driver.status} />}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                License: <span className="font-mono font-semibold text-foreground">{driver?.licenseNumber ?? "—"}</span> · Category: <span className="font-semibold text-foreground">{driver?.category ?? "—"}</span>
+                License:{" "}
+                <span className="font-mono font-semibold text-foreground">
+                  {driver?.licenseNumber ?? "—"}
+                </span>{" "}
+                · Category:{" "}
+                <span className="font-semibold text-foreground">
+                  {driver?.licenseCategory ?? "—"}
+                </span>
               </p>
             </div>
           </div>
@@ -334,13 +511,14 @@ function DriverConsole({ user }: { user: AuthUser }) {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Current Assigned Vehicle Details */}
         <div className="brutal-card p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-extrabold flex items-center gap-2">
-              <Truck className="h-4 w-4 text-primary" /> Assigned Vehicle (Registry Spec)
+              <Truck className="h-4 w-4 text-primary" /> Assigned Vehicle
             </h2>
-            <Link to="/vehicles" className="text-xs font-bold text-primary hover:underline">View Vehicle Registry →</Link>
+            <Link to="/vehicles" className="text-xs font-bold text-primary hover:underline">
+              View Vehicle Registry →
+            </Link>
           </div>
           {assignedVehicle ? (
             <div className="space-y-3 bg-muted/30 p-4 rounded-xl border border-border-soft">
@@ -369,36 +547,42 @@ function DriverConsole({ user }: { user: AuthUser }) {
           ) : (
             <div className="p-6 text-center text-muted-foreground text-sm bg-muted/20 rounded-xl border border-dashed border-border-soft space-y-2">
               <p>No active vehicle assigned right now.</p>
-              <Link to="/vehicles" className="inline-block text-xs font-bold text-primary hover:underline">Inspect master vehicle registry</Link>
+              <Link to="/vehicles" className="inline-block text-xs font-bold text-primary hover:underline">
+                Inspect master vehicle registry
+              </Link>
             </div>
           )}
         </div>
 
-        {/* Assigned Trips */}
         <div className="brutal-card p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-extrabold flex items-center gap-2">
-              <RouteIcon className="h-4 w-4 text-primary" /> My Active / Assigned Trips
+              <RouteIcon className="h-4 w-4 text-primary" /> My Trips
             </h2>
-            <Link to="/trips" className="text-xs font-bold text-primary hover:underline">All Trips →</Link>
+            <Link to="/trips" className="text-xs font-bold text-primary hover:underline">
+              All Trips →
+            </Link>
           </div>
           {myTrips.length > 0 ? (
             <div className="space-y-2">
-              {myTrips.slice(0, 3).map((t) => (
-                <div key={t.id} className="p-3 rounded-xl bg-card border border-border-soft flex items-center justify-between">
+              {myTrips.slice(0, 5).map((t) => (
+                <div
+                  key={t.id}
+                  className="p-3 rounded-xl bg-card border border-border-soft flex items-center justify-between"
+                >
                   <div>
                     <div className="text-sm font-bold">Trip {t.code}</div>
-                    <div className="text-xs text-muted-foreground">{t.source} → {t.destination}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t.source} → {t.destination}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={t.status} />
-                  </div>
+                  <StatusBadge status={t.status.toLowerCase()} />
                 </div>
               ))}
             </div>
           ) : (
             <div className="p-6 text-center text-muted-foreground text-sm bg-muted/20 rounded-xl border border-dashed border-border-soft">
-              No pending trips assigned to your profile.
+              No trips assigned to your profile.
             </div>
           )}
         </div>
