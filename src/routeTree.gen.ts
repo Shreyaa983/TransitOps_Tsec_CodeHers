@@ -15,16 +15,24 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PublicLoginRouteImport } from './routes/_public.login'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public.forgot-password'
 import { Route as AppVehiclesRouteImport } from './routes/_app.vehicles'
+import { Route as AppTripsRouteImport } from './routes/_app.trips'
 import { Route as AppDriversRouteImport } from './routes/_app.drivers'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppVehiclesIndexRouteImport } from './routes/_app.vehicles.index'
+import { Route as AppTripsIndexRouteImport } from './routes/_app.trips.index'
 import { Route as AppDriversIndexRouteImport } from './routes/_app.drivers.index'
 import { Route as AppVehiclesNewRouteImport } from './routes/_app.vehicles.new'
 import { Route as AppVehiclesVehicleIdRouteImport } from './routes/_app.vehicles.$vehicleId'
+import { Route as AppTripsNewRouteImport } from './routes/_app.trips.new'
+import { Route as AppTripsHistoryRouteImport } from './routes/_app.trips.history'
+import { Route as AppTripsTripIdRouteImport } from './routes/_app.trips.$tripId'
 import { Route as AppDriversNewRouteImport } from './routes/_app.drivers.new'
 import { Route as AppDriversDriverIdRouteImport } from './routes/_app.drivers.$driverId'
 import { Route as AppVehiclesVehicleIdEditRouteImport } from './routes/_app.vehicles.$vehicleId.edit'
 import { Route as AppVehiclesVehicleIdDocumentsRouteImport } from './routes/_app.vehicles.$vehicleId.documents'
+import { Route as AppTripsTripIdEditRouteImport } from './routes/_app.trips.$tripId.edit'
+import { Route as AppTripsTripIdDispatchRouteImport } from './routes/_app.trips.$tripId.dispatch'
+import { Route as AppTripsTripIdCompleteRouteImport } from './routes/_app.trips.$tripId.complete'
 import { Route as AppDriversDriverIdLicensesRouteImport } from './routes/_app.drivers.$driverId.licenses'
 import { Route as AppDriversDriverIdEditRouteImport } from './routes/_app.drivers.$driverId.edit'
 
@@ -56,6 +64,11 @@ const AppVehiclesRoute = AppVehiclesRouteImport.update({
   path: '/vehicles',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTripsRoute = AppTripsRouteImport.update({
+  id: '/trips',
+  path: '/trips',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDriversRoute = AppDriversRouteImport.update({
   id: '/drivers',
   path: '/drivers',
@@ -71,6 +84,11 @@ const AppVehiclesIndexRoute = AppVehiclesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppVehiclesRoute,
 } as any)
+const AppTripsIndexRoute = AppTripsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppTripsRoute,
+} as any)
 const AppDriversIndexRoute = AppDriversIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -85,6 +103,21 @@ const AppVehiclesVehicleIdRoute = AppVehiclesVehicleIdRouteImport.update({
   id: '/$vehicleId',
   path: '/$vehicleId',
   getParentRoute: () => AppVehiclesRoute,
+} as any)
+const AppTripsNewRoute = AppTripsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppTripsRoute,
+} as any)
+const AppTripsHistoryRoute = AppTripsHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppTripsRoute,
+} as any)
+const AppTripsTripIdRoute = AppTripsTripIdRouteImport.update({
+  id: '/$tripId',
+  path: '/$tripId',
+  getParentRoute: () => AppTripsRoute,
 } as any)
 const AppDriversNewRoute = AppDriversNewRouteImport.update({
   id: '/new',
@@ -108,6 +141,21 @@ const AppVehiclesVehicleIdDocumentsRoute =
     path: '/documents',
     getParentRoute: () => AppVehiclesVehicleIdRoute,
   } as any)
+const AppTripsTripIdEditRoute = AppTripsTripIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
+const AppTripsTripIdDispatchRoute = AppTripsTripIdDispatchRouteImport.update({
+  id: '/dispatch',
+  path: '/dispatch',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
+const AppTripsTripIdCompleteRoute = AppTripsTripIdCompleteRouteImport.update({
+  id: '/complete',
+  path: '/complete',
+  getParentRoute: () => AppTripsTripIdRoute,
+} as any)
 const AppDriversDriverIdLicensesRoute =
   AppDriversDriverIdLicensesRouteImport.update({
     id: '/licenses',
@@ -124,17 +172,25 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AppDashboardRoute
   '/drivers': typeof AppDriversRouteWithChildren
+  '/trips': typeof AppTripsRouteWithChildren
   '/vehicles': typeof AppVehiclesRouteWithChildren
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/drivers/new': typeof AppDriversNewRoute
+  '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
+  '/trips/history': typeof AppTripsHistoryRoute
+  '/trips/new': typeof AppTripsNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
   '/drivers/': typeof AppDriversIndexRoute
+  '/trips/': typeof AppTripsIndexRoute
   '/vehicles/': typeof AppVehiclesIndexRoute
   '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
   '/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
+  '/trips/$tripId/complete': typeof AppTripsTripIdCompleteRoute
+  '/trips/$tripId/dispatch': typeof AppTripsTripIdDispatchRoute
+  '/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
   '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
@@ -145,12 +201,19 @@ export interface FileRoutesByTo {
   '/login': typeof PublicLoginRoute
   '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/drivers/new': typeof AppDriversNewRoute
+  '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
+  '/trips/history': typeof AppTripsHistoryRoute
+  '/trips/new': typeof AppTripsNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
   '/drivers': typeof AppDriversIndexRoute
+  '/trips': typeof AppTripsIndexRoute
   '/vehicles': typeof AppVehiclesIndexRoute
   '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
   '/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
+  '/trips/$tripId/complete': typeof AppTripsTripIdCompleteRoute
+  '/trips/$tripId/dispatch': typeof AppTripsTripIdDispatchRoute
+  '/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
   '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
@@ -161,17 +224,25 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/drivers': typeof AppDriversRouteWithChildren
+  '/_app/trips': typeof AppTripsRouteWithChildren
   '/_app/vehicles': typeof AppVehiclesRouteWithChildren
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
   '/_app/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/_app/drivers/new': typeof AppDriversNewRoute
+  '/_app/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
+  '/_app/trips/history': typeof AppTripsHistoryRoute
+  '/_app/trips/new': typeof AppTripsNewRoute
   '/_app/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/_app/vehicles/new': typeof AppVehiclesNewRoute
   '/_app/drivers/': typeof AppDriversIndexRoute
+  '/_app/trips/': typeof AppTripsIndexRoute
   '/_app/vehicles/': typeof AppVehiclesIndexRoute
   '/_app/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
   '/_app/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
+  '/_app/trips/$tripId/complete': typeof AppTripsTripIdCompleteRoute
+  '/_app/trips/$tripId/dispatch': typeof AppTripsTripIdDispatchRoute
+  '/_app/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
   '/_app/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/_app/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
@@ -181,17 +252,25 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/drivers'
+    | '/trips'
     | '/vehicles'
     | '/forgot-password'
     | '/login'
     | '/drivers/$driverId'
     | '/drivers/new'
+    | '/trips/$tripId'
+    | '/trips/history'
+    | '/trips/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
     | '/drivers/'
+    | '/trips/'
     | '/vehicles/'
     | '/drivers/$driverId/edit'
     | '/drivers/$driverId/licenses'
+    | '/trips/$tripId/complete'
+    | '/trips/$tripId/dispatch'
+    | '/trips/$tripId/edit'
     | '/vehicles/$vehicleId/documents'
     | '/vehicles/$vehicleId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -202,12 +281,19 @@ export interface FileRouteTypes {
     | '/login'
     | '/drivers/$driverId'
     | '/drivers/new'
+    | '/trips/$tripId'
+    | '/trips/history'
+    | '/trips/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
     | '/drivers'
+    | '/trips'
     | '/vehicles'
     | '/drivers/$driverId/edit'
     | '/drivers/$driverId/licenses'
+    | '/trips/$tripId/complete'
+    | '/trips/$tripId/dispatch'
+    | '/trips/$tripId/edit'
     | '/vehicles/$vehicleId/documents'
     | '/vehicles/$vehicleId/edit'
   id:
@@ -217,17 +303,25 @@ export interface FileRouteTypes {
     | '/_public'
     | '/_app/dashboard'
     | '/_app/drivers'
+    | '/_app/trips'
     | '/_app/vehicles'
     | '/_public/forgot-password'
     | '/_public/login'
     | '/_app/drivers/$driverId'
     | '/_app/drivers/new'
+    | '/_app/trips/$tripId'
+    | '/_app/trips/history'
+    | '/_app/trips/new'
     | '/_app/vehicles/$vehicleId'
     | '/_app/vehicles/new'
     | '/_app/drivers/'
+    | '/_app/trips/'
     | '/_app/vehicles/'
     | '/_app/drivers/$driverId/edit'
     | '/_app/drivers/$driverId/licenses'
+    | '/_app/trips/$tripId/complete'
+    | '/_app/trips/$tripId/dispatch'
+    | '/_app/trips/$tripId/edit'
     | '/_app/vehicles/$vehicleId/documents'
     | '/_app/vehicles/$vehicleId/edit'
   fileRoutesById: FileRoutesById
@@ -282,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVehiclesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/trips': {
+      id: '/_app/trips'
+      path: '/trips'
+      fullPath: '/trips'
+      preLoaderRoute: typeof AppTripsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/drivers': {
       id: '/_app/drivers'
       path: '/drivers'
@@ -303,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVehiclesIndexRouteImport
       parentRoute: typeof AppVehiclesRoute
     }
+    '/_app/trips/': {
+      id: '/_app/trips/'
+      path: '/'
+      fullPath: '/trips/'
+      preLoaderRoute: typeof AppTripsIndexRouteImport
+      parentRoute: typeof AppTripsRoute
+    }
     '/_app/drivers/': {
       id: '/_app/drivers/'
       path: '/'
@@ -323,6 +431,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/vehicles/$vehicleId'
       preLoaderRoute: typeof AppVehiclesVehicleIdRouteImport
       parentRoute: typeof AppVehiclesRoute
+    }
+    '/_app/trips/new': {
+      id: '/_app/trips/new'
+      path: '/new'
+      fullPath: '/trips/new'
+      preLoaderRoute: typeof AppTripsNewRouteImport
+      parentRoute: typeof AppTripsRoute
+    }
+    '/_app/trips/history': {
+      id: '/_app/trips/history'
+      path: '/history'
+      fullPath: '/trips/history'
+      preLoaderRoute: typeof AppTripsHistoryRouteImport
+      parentRoute: typeof AppTripsRoute
+    }
+    '/_app/trips/$tripId': {
+      id: '/_app/trips/$tripId'
+      path: '/$tripId'
+      fullPath: '/trips/$tripId'
+      preLoaderRoute: typeof AppTripsTripIdRouteImport
+      parentRoute: typeof AppTripsRoute
     }
     '/_app/drivers/new': {
       id: '/_app/drivers/new'
@@ -351,6 +480,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/vehicles/$vehicleId/documents'
       preLoaderRoute: typeof AppVehiclesVehicleIdDocumentsRouteImport
       parentRoute: typeof AppVehiclesVehicleIdRoute
+    }
+    '/_app/trips/$tripId/edit': {
+      id: '/_app/trips/$tripId/edit'
+      path: '/edit'
+      fullPath: '/trips/$tripId/edit'
+      preLoaderRoute: typeof AppTripsTripIdEditRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
+    '/_app/trips/$tripId/dispatch': {
+      id: '/_app/trips/$tripId/dispatch'
+      path: '/dispatch'
+      fullPath: '/trips/$tripId/dispatch'
+      preLoaderRoute: typeof AppTripsTripIdDispatchRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
+    }
+    '/_app/trips/$tripId/complete': {
+      id: '/_app/trips/$tripId/complete'
+      path: '/complete'
+      fullPath: '/trips/$tripId/complete'
+      preLoaderRoute: typeof AppTripsTripIdCompleteRouteImport
+      parentRoute: typeof AppTripsTripIdRoute
     }
     '/_app/drivers/$driverId/licenses': {
       id: '/_app/drivers/$driverId/licenses'
@@ -398,6 +548,40 @@ const AppDriversRouteWithChildren = AppDriversRoute._addFileChildren(
   AppDriversRouteChildren,
 )
 
+interface AppTripsTripIdRouteChildren {
+  AppTripsTripIdCompleteRoute: typeof AppTripsTripIdCompleteRoute
+  AppTripsTripIdDispatchRoute: typeof AppTripsTripIdDispatchRoute
+  AppTripsTripIdEditRoute: typeof AppTripsTripIdEditRoute
+}
+
+const AppTripsTripIdRouteChildren: AppTripsTripIdRouteChildren = {
+  AppTripsTripIdCompleteRoute: AppTripsTripIdCompleteRoute,
+  AppTripsTripIdDispatchRoute: AppTripsTripIdDispatchRoute,
+  AppTripsTripIdEditRoute: AppTripsTripIdEditRoute,
+}
+
+const AppTripsTripIdRouteWithChildren = AppTripsTripIdRoute._addFileChildren(
+  AppTripsTripIdRouteChildren,
+)
+
+interface AppTripsRouteChildren {
+  AppTripsTripIdRoute: typeof AppTripsTripIdRouteWithChildren
+  AppTripsHistoryRoute: typeof AppTripsHistoryRoute
+  AppTripsNewRoute: typeof AppTripsNewRoute
+  AppTripsIndexRoute: typeof AppTripsIndexRoute
+}
+
+const AppTripsRouteChildren: AppTripsRouteChildren = {
+  AppTripsTripIdRoute: AppTripsTripIdRouteWithChildren,
+  AppTripsHistoryRoute: AppTripsHistoryRoute,
+  AppTripsNewRoute: AppTripsNewRoute,
+  AppTripsIndexRoute: AppTripsIndexRoute,
+}
+
+const AppTripsRouteWithChildren = AppTripsRoute._addFileChildren(
+  AppTripsRouteChildren,
+)
+
 interface AppVehiclesVehicleIdRouteChildren {
   AppVehiclesVehicleIdDocumentsRoute: typeof AppVehiclesVehicleIdDocumentsRoute
   AppVehiclesVehicleIdEditRoute: typeof AppVehiclesVehicleIdEditRoute
@@ -430,12 +614,14 @@ const AppVehiclesRouteWithChildren = AppVehiclesRoute._addFileChildren(
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDriversRoute: typeof AppDriversRouteWithChildren
+  AppTripsRoute: typeof AppTripsRouteWithChildren
   AppVehiclesRoute: typeof AppVehiclesRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDriversRoute: AppDriversRouteWithChildren,
+  AppTripsRoute: AppTripsRouteWithChildren,
   AppVehiclesRoute: AppVehiclesRouteWithChildren,
 }
 
