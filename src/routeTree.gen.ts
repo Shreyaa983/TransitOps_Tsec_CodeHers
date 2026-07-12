@@ -15,12 +15,18 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PublicLoginRouteImport } from './routes/_public.login'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public.forgot-password'
 import { Route as AppVehiclesRouteImport } from './routes/_app.vehicles'
+import { Route as AppDriversRouteImport } from './routes/_app.drivers'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppVehiclesIndexRouteImport } from './routes/_app.vehicles.index'
+import { Route as AppDriversIndexRouteImport } from './routes/_app.drivers.index'
 import { Route as AppVehiclesNewRouteImport } from './routes/_app.vehicles.new'
 import { Route as AppVehiclesVehicleIdRouteImport } from './routes/_app.vehicles.$vehicleId'
+import { Route as AppDriversNewRouteImport } from './routes/_app.drivers.new'
+import { Route as AppDriversDriverIdRouteImport } from './routes/_app.drivers.$driverId'
 import { Route as AppVehiclesVehicleIdEditRouteImport } from './routes/_app.vehicles.$vehicleId.edit'
 import { Route as AppVehiclesVehicleIdDocumentsRouteImport } from './routes/_app.vehicles.$vehicleId.documents'
+import { Route as AppDriversDriverIdLicensesRouteImport } from './routes/_app.drivers.$driverId.licenses'
+import { Route as AppDriversDriverIdEditRouteImport } from './routes/_app.drivers.$driverId.edit'
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
@@ -50,6 +56,11 @@ const AppVehiclesRoute = AppVehiclesRouteImport.update({
   path: '/vehicles',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDriversRoute = AppDriversRouteImport.update({
+  id: '/drivers',
+  path: '/drivers',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -60,6 +71,11 @@ const AppVehiclesIndexRoute = AppVehiclesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppVehiclesRoute,
 } as any)
+const AppDriversIndexRoute = AppDriversIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppDriversRoute,
+} as any)
 const AppVehiclesNewRoute = AppVehiclesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -69,6 +85,16 @@ const AppVehiclesVehicleIdRoute = AppVehiclesVehicleIdRouteImport.update({
   id: '/$vehicleId',
   path: '/$vehicleId',
   getParentRoute: () => AppVehiclesRoute,
+} as any)
+const AppDriversNewRoute = AppDriversNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppDriversRoute,
+} as any)
+const AppDriversDriverIdRoute = AppDriversDriverIdRouteImport.update({
+  id: '/$driverId',
+  path: '/$driverId',
+  getParentRoute: () => AppDriversRoute,
 } as any)
 const AppVehiclesVehicleIdEditRoute =
   AppVehiclesVehicleIdEditRouteImport.update({
@@ -82,16 +108,33 @@ const AppVehiclesVehicleIdDocumentsRoute =
     path: '/documents',
     getParentRoute: () => AppVehiclesVehicleIdRoute,
   } as any)
+const AppDriversDriverIdLicensesRoute =
+  AppDriversDriverIdLicensesRouteImport.update({
+    id: '/licenses',
+    path: '/licenses',
+    getParentRoute: () => AppDriversDriverIdRoute,
+  } as any)
+const AppDriversDriverIdEditRoute = AppDriversDriverIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AppDriversDriverIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AppDashboardRoute
+  '/drivers': typeof AppDriversRouteWithChildren
   '/vehicles': typeof AppVehiclesRouteWithChildren
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
+  '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
+  '/drivers/new': typeof AppDriversNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
+  '/drivers/': typeof AppDriversIndexRoute
   '/vehicles/': typeof AppVehiclesIndexRoute
+  '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
+  '/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
   '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
@@ -100,9 +143,14 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
+  '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
+  '/drivers/new': typeof AppDriversNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
+  '/drivers': typeof AppDriversIndexRoute
   '/vehicles': typeof AppVehiclesIndexRoute
+  '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
+  '/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
   '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
@@ -112,12 +160,18 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/drivers': typeof AppDriversRouteWithChildren
   '/_app/vehicles': typeof AppVehiclesRouteWithChildren
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
+  '/_app/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
+  '/_app/drivers/new': typeof AppDriversNewRoute
   '/_app/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/_app/vehicles/new': typeof AppVehiclesNewRoute
+  '/_app/drivers/': typeof AppDriversIndexRoute
   '/_app/vehicles/': typeof AppVehiclesIndexRoute
+  '/_app/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
+  '/_app/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
   '/_app/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
   '/_app/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
@@ -126,12 +180,18 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/drivers'
     | '/vehicles'
     | '/forgot-password'
     | '/login'
+    | '/drivers/$driverId'
+    | '/drivers/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
+    | '/drivers/'
     | '/vehicles/'
+    | '/drivers/$driverId/edit'
+    | '/drivers/$driverId/licenses'
     | '/vehicles/$vehicleId/documents'
     | '/vehicles/$vehicleId/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -140,9 +200,14 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/forgot-password'
     | '/login'
+    | '/drivers/$driverId'
+    | '/drivers/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
+    | '/drivers'
     | '/vehicles'
+    | '/drivers/$driverId/edit'
+    | '/drivers/$driverId/licenses'
     | '/vehicles/$vehicleId/documents'
     | '/vehicles/$vehicleId/edit'
   id:
@@ -151,12 +216,18 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_public'
     | '/_app/dashboard'
+    | '/_app/drivers'
     | '/_app/vehicles'
     | '/_public/forgot-password'
     | '/_public/login'
+    | '/_app/drivers/$driverId'
+    | '/_app/drivers/new'
     | '/_app/vehicles/$vehicleId'
     | '/_app/vehicles/new'
+    | '/_app/drivers/'
     | '/_app/vehicles/'
+    | '/_app/drivers/$driverId/edit'
+    | '/_app/drivers/$driverId/licenses'
     | '/_app/vehicles/$vehicleId/documents'
     | '/_app/vehicles/$vehicleId/edit'
   fileRoutesById: FileRoutesById
@@ -211,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVehiclesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/drivers': {
+      id: '/_app/drivers'
+      path: '/drivers'
+      fullPath: '/drivers'
+      preLoaderRoute: typeof AppDriversRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -224,6 +302,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/vehicles/'
       preLoaderRoute: typeof AppVehiclesIndexRouteImport
       parentRoute: typeof AppVehiclesRoute
+    }
+    '/_app/drivers/': {
+      id: '/_app/drivers/'
+      path: '/'
+      fullPath: '/drivers/'
+      preLoaderRoute: typeof AppDriversIndexRouteImport
+      parentRoute: typeof AppDriversRoute
     }
     '/_app/vehicles/new': {
       id: '/_app/vehicles/new'
@@ -239,6 +324,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVehiclesVehicleIdRouteImport
       parentRoute: typeof AppVehiclesRoute
     }
+    '/_app/drivers/new': {
+      id: '/_app/drivers/new'
+      path: '/new'
+      fullPath: '/drivers/new'
+      preLoaderRoute: typeof AppDriversNewRouteImport
+      parentRoute: typeof AppDriversRoute
+    }
+    '/_app/drivers/$driverId': {
+      id: '/_app/drivers/$driverId'
+      path: '/$driverId'
+      fullPath: '/drivers/$driverId'
+      preLoaderRoute: typeof AppDriversDriverIdRouteImport
+      parentRoute: typeof AppDriversRoute
+    }
     '/_app/vehicles/$vehicleId/edit': {
       id: '/_app/vehicles/$vehicleId/edit'
       path: '/edit'
@@ -253,8 +352,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVehiclesVehicleIdDocumentsRouteImport
       parentRoute: typeof AppVehiclesVehicleIdRoute
     }
+    '/_app/drivers/$driverId/licenses': {
+      id: '/_app/drivers/$driverId/licenses'
+      path: '/licenses'
+      fullPath: '/drivers/$driverId/licenses'
+      preLoaderRoute: typeof AppDriversDriverIdLicensesRouteImport
+      parentRoute: typeof AppDriversDriverIdRoute
+    }
+    '/_app/drivers/$driverId/edit': {
+      id: '/_app/drivers/$driverId/edit'
+      path: '/edit'
+      fullPath: '/drivers/$driverId/edit'
+      preLoaderRoute: typeof AppDriversDriverIdEditRouteImport
+      parentRoute: typeof AppDriversDriverIdRoute
+    }
   }
 }
+
+interface AppDriversDriverIdRouteChildren {
+  AppDriversDriverIdEditRoute: typeof AppDriversDriverIdEditRoute
+  AppDriversDriverIdLicensesRoute: typeof AppDriversDriverIdLicensesRoute
+}
+
+const AppDriversDriverIdRouteChildren: AppDriversDriverIdRouteChildren = {
+  AppDriversDriverIdEditRoute: AppDriversDriverIdEditRoute,
+  AppDriversDriverIdLicensesRoute: AppDriversDriverIdLicensesRoute,
+}
+
+const AppDriversDriverIdRouteWithChildren =
+  AppDriversDriverIdRoute._addFileChildren(AppDriversDriverIdRouteChildren)
+
+interface AppDriversRouteChildren {
+  AppDriversDriverIdRoute: typeof AppDriversDriverIdRouteWithChildren
+  AppDriversNewRoute: typeof AppDriversNewRoute
+  AppDriversIndexRoute: typeof AppDriversIndexRoute
+}
+
+const AppDriversRouteChildren: AppDriversRouteChildren = {
+  AppDriversDriverIdRoute: AppDriversDriverIdRouteWithChildren,
+  AppDriversNewRoute: AppDriversNewRoute,
+  AppDriversIndexRoute: AppDriversIndexRoute,
+}
+
+const AppDriversRouteWithChildren = AppDriversRoute._addFileChildren(
+  AppDriversRouteChildren,
+)
 
 interface AppVehiclesVehicleIdRouteChildren {
   AppVehiclesVehicleIdDocumentsRoute: typeof AppVehiclesVehicleIdDocumentsRoute
@@ -287,11 +429,13 @@ const AppVehiclesRouteWithChildren = AppVehiclesRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDriversRoute: typeof AppDriversRouteWithChildren
   AppVehiclesRoute: typeof AppVehiclesRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppDriversRoute: AppDriversRouteWithChildren,
   AppVehiclesRoute: AppVehiclesRouteWithChildren,
 }
 
