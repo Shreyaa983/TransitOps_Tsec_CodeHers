@@ -16,21 +16,47 @@ import { Route as PublicLoginRouteImport } from './routes/_public.login'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public.forgot-password'
 import { Route as AppVehiclesRouteImport } from './routes/_app.vehicles'
 import { Route as AppTripsRouteImport } from './routes/_app.trips'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppReportsRouteImport } from './routes/_app.reports'
+import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppMaintenanceRouteImport } from './routes/_app.maintenance'
+import { Route as AppFuelRouteImport } from './routes/_app.fuel'
+import { Route as AppExpensesRouteImport } from './routes/_app.expenses'
 import { Route as AppDriversRouteImport } from './routes/_app.drivers'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppAiCopilotRouteImport } from './routes/_app.ai-copilot'
 import { Route as AppVehiclesIndexRouteImport } from './routes/_app.vehicles.index'
 import { Route as AppTripsIndexRouteImport } from './routes/_app.trips.index'
+import { Route as AppSettingsIndexRouteImport } from './routes/_app.settings.index'
+import { Route as AppReportsIndexRouteImport } from './routes/_app.reports.index'
 import { Route as AppMaintenanceIndexRouteImport } from './routes/_app.maintenance.index'
+import { Route as AppFuelIndexRouteImport } from './routes/_app.fuel.index'
+import { Route as AppExpensesIndexRouteImport } from './routes/_app.expenses.index'
 import { Route as AppDriversIndexRouteImport } from './routes/_app.drivers.index'
 import { Route as AppVehiclesNewRouteImport } from './routes/_app.vehicles.new'
 import { Route as AppVehiclesVehicleIdRouteImport } from './routes/_app.vehicles.$vehicleId'
 import { Route as AppTripsNewRouteImport } from './routes/_app.trips.new'
 import { Route as AppTripsHistoryRouteImport } from './routes/_app.trips.history'
 import { Route as AppTripsTripIdRouteImport } from './routes/_app.trips.$tripId'
+import { Route as AppSettingsSecurityRouteImport } from './routes/_app.settings.security'
+import { Route as AppSettingsRolesRouteImport } from './routes/_app.settings.roles'
+import { Route as AppSettingsProfileRouteImport } from './routes/_app.settings.profile'
+import { Route as AppSettingsPreferencesRouteImport } from './routes/_app.settings.preferences'
+import { Route as AppSettingsAccountRouteImport } from './routes/_app.settings.account'
+import { Route as AppReportsRoiRouteImport } from './routes/_app.reports.roi'
+import { Route as AppReportsFuelRouteImport } from './routes/_app.reports.fuel'
+import { Route as AppReportsFleetRouteImport } from './routes/_app.reports.fleet'
+import { Route as AppReportsExportRouteImport } from './routes/_app.reports.export'
+import { Route as AppReportsExpensesRouteImport } from './routes/_app.reports.expenses'
 import { Route as AppMaintenanceScheduleRouteImport } from './routes/_app.maintenance.schedule'
 import { Route as AppMaintenanceNewRouteImport } from './routes/_app.maintenance.new'
 import { Route as AppMaintenanceMaintenanceIdRouteImport } from './routes/_app.maintenance.$maintenanceId'
+import { Route as AppFuelNewRouteImport } from './routes/_app.fuel.new'
+import { Route as AppFuelHistoryRouteImport } from './routes/_app.fuel.history'
+import { Route as AppFuelFuelLogIdRouteImport } from './routes/_app.fuel.$fuelLogId'
+import { Route as AppExpensesNewRouteImport } from './routes/_app.expenses.new'
+import { Route as AppExpensesHistoryRouteImport } from './routes/_app.expenses.history'
+import { Route as AppExpensesExpenseIdRouteImport } from './routes/_app.expenses.$expenseId'
 import { Route as AppDriversNewRouteImport } from './routes/_app.drivers.new'
 import { Route as AppDriversDriverIdRouteImport } from './routes/_app.drivers.$driverId'
 import { Route as AppVehiclesVehicleIdEditRouteImport } from './routes/_app.vehicles.$vehicleId.edit'
@@ -75,9 +101,34 @@ const AppTripsRoute = AppTripsRouteImport.update({
   path: '/trips',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMaintenanceRoute = AppMaintenanceRouteImport.update({
   id: '/maintenance',
   path: '/maintenance',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFuelRoute = AppFuelRouteImport.update({
+  id: '/fuel',
+  path: '/fuel',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExpensesRoute = AppExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDriversRoute = AppDriversRouteImport.update({
@@ -90,6 +141,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiCopilotRoute = AppAiCopilotRouteImport.update({
+  id: '/ai-copilot',
+  path: '/ai-copilot',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppVehiclesIndexRoute = AppVehiclesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -100,10 +156,30 @@ const AppTripsIndexRoute = AppTripsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppTripsRoute,
 } as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppReportsRoute,
+} as any)
 const AppMaintenanceIndexRoute = AppMaintenanceIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppMaintenanceRoute,
+} as any)
+const AppFuelIndexRoute = AppFuelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppFuelRoute,
+} as any)
+const AppExpensesIndexRoute = AppExpensesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppExpensesRoute,
 } as any)
 const AppDriversIndexRoute = AppDriversIndexRouteImport.update({
   id: '/',
@@ -135,6 +211,56 @@ const AppTripsTripIdRoute = AppTripsTripIdRouteImport.update({
   path: '/$tripId',
   getParentRoute: () => AppTripsRoute,
 } as any)
+const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsRolesRoute = AppSettingsRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsPreferencesRoute = AppSettingsPreferencesRouteImport.update({
+  id: '/preferences',
+  path: '/preferences',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppReportsRoiRoute = AppReportsRoiRouteImport.update({
+  id: '/roi',
+  path: '/roi',
+  getParentRoute: () => AppReportsRoute,
+} as any)
+const AppReportsFuelRoute = AppReportsFuelRouteImport.update({
+  id: '/fuel',
+  path: '/fuel',
+  getParentRoute: () => AppReportsRoute,
+} as any)
+const AppReportsFleetRoute = AppReportsFleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
+  getParentRoute: () => AppReportsRoute,
+} as any)
+const AppReportsExportRoute = AppReportsExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => AppReportsRoute,
+} as any)
+const AppReportsExpensesRoute = AppReportsExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
+  getParentRoute: () => AppReportsRoute,
+} as any)
 const AppMaintenanceScheduleRoute = AppMaintenanceScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
@@ -151,6 +277,36 @@ const AppMaintenanceMaintenanceIdRoute =
     path: '/$maintenanceId',
     getParentRoute: () => AppMaintenanceRoute,
   } as any)
+const AppFuelNewRoute = AppFuelNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppFuelRoute,
+} as any)
+const AppFuelHistoryRoute = AppFuelHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppFuelRoute,
+} as any)
+const AppFuelFuelLogIdRoute = AppFuelFuelLogIdRouteImport.update({
+  id: '/$fuelLogId',
+  path: '/$fuelLogId',
+  getParentRoute: () => AppFuelRoute,
+} as any)
+const AppExpensesNewRoute = AppExpensesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppExpensesRoute,
+} as any)
+const AppExpensesHistoryRoute = AppExpensesHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppExpensesRoute,
+} as any)
+const AppExpensesExpenseIdRoute = AppExpensesExpenseIdRouteImport.update({
+  id: '/$expenseId',
+  path: '/$expenseId',
+  getParentRoute: () => AppExpensesRoute,
+} as any)
 const AppDriversNewRoute = AppDriversNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -208,25 +364,51 @@ const AppDriversDriverIdEditRoute = AppDriversDriverIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai-copilot': typeof AppAiCopilotRoute
   '/dashboard': typeof AppDashboardRoute
   '/drivers': typeof AppDriversRouteWithChildren
+  '/expenses': typeof AppExpensesRouteWithChildren
+  '/fuel': typeof AppFuelRouteWithChildren
   '/maintenance': typeof AppMaintenanceRouteWithChildren
+  '/notifications': typeof AppNotificationsRoute
+  '/reports': typeof AppReportsRouteWithChildren
+  '/settings': typeof AppSettingsRouteWithChildren
   '/trips': typeof AppTripsRouteWithChildren
   '/vehicles': typeof AppVehiclesRouteWithChildren
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/drivers/new': typeof AppDriversNewRoute
+  '/expenses/$expenseId': typeof AppExpensesExpenseIdRoute
+  '/expenses/history': typeof AppExpensesHistoryRoute
+  '/expenses/new': typeof AppExpensesNewRoute
+  '/fuel/$fuelLogId': typeof AppFuelFuelLogIdRoute
+  '/fuel/history': typeof AppFuelHistoryRoute
+  '/fuel/new': typeof AppFuelNewRoute
   '/maintenance/$maintenanceId': typeof AppMaintenanceMaintenanceIdRouteWithChildren
   '/maintenance/new': typeof AppMaintenanceNewRoute
   '/maintenance/schedule': typeof AppMaintenanceScheduleRoute
+  '/reports/expenses': typeof AppReportsExpensesRoute
+  '/reports/export': typeof AppReportsExportRoute
+  '/reports/fleet': typeof AppReportsFleetRoute
+  '/reports/fuel': typeof AppReportsFuelRoute
+  '/reports/roi': typeof AppReportsRoiRoute
+  '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/preferences': typeof AppSettingsPreferencesRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/roles': typeof AppSettingsRolesRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/trips/history': typeof AppTripsHistoryRoute
   '/trips/new': typeof AppTripsNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
   '/drivers/': typeof AppDriversIndexRoute
+  '/expenses/': typeof AppExpensesIndexRoute
+  '/fuel/': typeof AppFuelIndexRoute
   '/maintenance/': typeof AppMaintenanceIndexRoute
+  '/reports/': typeof AppReportsIndexRoute
+  '/settings/': typeof AppSettingsIndexRoute
   '/trips/': typeof AppTripsIndexRoute
   '/vehicles/': typeof AppVehiclesIndexRoute
   '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
@@ -240,21 +422,43 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai-copilot': typeof AppAiCopilotRoute
   '/dashboard': typeof AppDashboardRoute
+  '/notifications': typeof AppNotificationsRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/drivers/new': typeof AppDriversNewRoute
+  '/expenses/$expenseId': typeof AppExpensesExpenseIdRoute
+  '/expenses/history': typeof AppExpensesHistoryRoute
+  '/expenses/new': typeof AppExpensesNewRoute
+  '/fuel/$fuelLogId': typeof AppFuelFuelLogIdRoute
+  '/fuel/history': typeof AppFuelHistoryRoute
+  '/fuel/new': typeof AppFuelNewRoute
   '/maintenance/$maintenanceId': typeof AppMaintenanceMaintenanceIdRouteWithChildren
   '/maintenance/new': typeof AppMaintenanceNewRoute
   '/maintenance/schedule': typeof AppMaintenanceScheduleRoute
+  '/reports/expenses': typeof AppReportsExpensesRoute
+  '/reports/export': typeof AppReportsExportRoute
+  '/reports/fleet': typeof AppReportsFleetRoute
+  '/reports/fuel': typeof AppReportsFuelRoute
+  '/reports/roi': typeof AppReportsRoiRoute
+  '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/preferences': typeof AppSettingsPreferencesRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/roles': typeof AppSettingsRolesRoute
+  '/settings/security': typeof AppSettingsSecurityRoute
   '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/trips/history': typeof AppTripsHistoryRoute
   '/trips/new': typeof AppTripsNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
   '/drivers': typeof AppDriversIndexRoute
+  '/expenses': typeof AppExpensesIndexRoute
+  '/fuel': typeof AppFuelIndexRoute
   '/maintenance': typeof AppMaintenanceIndexRoute
+  '/reports': typeof AppReportsIndexRoute
+  '/settings': typeof AppSettingsIndexRoute
   '/trips': typeof AppTripsIndexRoute
   '/vehicles': typeof AppVehiclesIndexRoute
   '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
@@ -271,25 +475,51 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
+  '/_app/ai-copilot': typeof AppAiCopilotRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/drivers': typeof AppDriversRouteWithChildren
+  '/_app/expenses': typeof AppExpensesRouteWithChildren
+  '/_app/fuel': typeof AppFuelRouteWithChildren
   '/_app/maintenance': typeof AppMaintenanceRouteWithChildren
+  '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/reports': typeof AppReportsRouteWithChildren
+  '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/trips': typeof AppTripsRouteWithChildren
   '/_app/vehicles': typeof AppVehiclesRouteWithChildren
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
   '/_app/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/_app/drivers/new': typeof AppDriversNewRoute
+  '/_app/expenses/$expenseId': typeof AppExpensesExpenseIdRoute
+  '/_app/expenses/history': typeof AppExpensesHistoryRoute
+  '/_app/expenses/new': typeof AppExpensesNewRoute
+  '/_app/fuel/$fuelLogId': typeof AppFuelFuelLogIdRoute
+  '/_app/fuel/history': typeof AppFuelHistoryRoute
+  '/_app/fuel/new': typeof AppFuelNewRoute
   '/_app/maintenance/$maintenanceId': typeof AppMaintenanceMaintenanceIdRouteWithChildren
   '/_app/maintenance/new': typeof AppMaintenanceNewRoute
   '/_app/maintenance/schedule': typeof AppMaintenanceScheduleRoute
+  '/_app/reports/expenses': typeof AppReportsExpensesRoute
+  '/_app/reports/export': typeof AppReportsExportRoute
+  '/_app/reports/fleet': typeof AppReportsFleetRoute
+  '/_app/reports/fuel': typeof AppReportsFuelRoute
+  '/_app/reports/roi': typeof AppReportsRoiRoute
+  '/_app/settings/account': typeof AppSettingsAccountRoute
+  '/_app/settings/preferences': typeof AppSettingsPreferencesRoute
+  '/_app/settings/profile': typeof AppSettingsProfileRoute
+  '/_app/settings/roles': typeof AppSettingsRolesRoute
+  '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/_app/trips/history': typeof AppTripsHistoryRoute
   '/_app/trips/new': typeof AppTripsNewRoute
   '/_app/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/_app/vehicles/new': typeof AppVehiclesNewRoute
   '/_app/drivers/': typeof AppDriversIndexRoute
+  '/_app/expenses/': typeof AppExpensesIndexRoute
+  '/_app/fuel/': typeof AppFuelIndexRoute
   '/_app/maintenance/': typeof AppMaintenanceIndexRoute
+  '/_app/reports/': typeof AppReportsIndexRoute
+  '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/trips/': typeof AppTripsIndexRoute
   '/_app/vehicles/': typeof AppVehiclesIndexRoute
   '/_app/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
@@ -305,25 +535,51 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ai-copilot'
     | '/dashboard'
     | '/drivers'
+    | '/expenses'
+    | '/fuel'
     | '/maintenance'
+    | '/notifications'
+    | '/reports'
+    | '/settings'
     | '/trips'
     | '/vehicles'
     | '/forgot-password'
     | '/login'
     | '/drivers/$driverId'
     | '/drivers/new'
+    | '/expenses/$expenseId'
+    | '/expenses/history'
+    | '/expenses/new'
+    | '/fuel/$fuelLogId'
+    | '/fuel/history'
+    | '/fuel/new'
     | '/maintenance/$maintenanceId'
     | '/maintenance/new'
     | '/maintenance/schedule'
+    | '/reports/expenses'
+    | '/reports/export'
+    | '/reports/fleet'
+    | '/reports/fuel'
+    | '/reports/roi'
+    | '/settings/account'
+    | '/settings/preferences'
+    | '/settings/profile'
+    | '/settings/roles'
+    | '/settings/security'
     | '/trips/$tripId'
     | '/trips/history'
     | '/trips/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
     | '/drivers/'
+    | '/expenses/'
+    | '/fuel/'
     | '/maintenance/'
+    | '/reports/'
+    | '/settings/'
     | '/trips/'
     | '/vehicles/'
     | '/drivers/$driverId/edit'
@@ -337,21 +593,43 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ai-copilot'
     | '/dashboard'
+    | '/notifications'
     | '/forgot-password'
     | '/login'
     | '/drivers/$driverId'
     | '/drivers/new'
+    | '/expenses/$expenseId'
+    | '/expenses/history'
+    | '/expenses/new'
+    | '/fuel/$fuelLogId'
+    | '/fuel/history'
+    | '/fuel/new'
     | '/maintenance/$maintenanceId'
     | '/maintenance/new'
     | '/maintenance/schedule'
+    | '/reports/expenses'
+    | '/reports/export'
+    | '/reports/fleet'
+    | '/reports/fuel'
+    | '/reports/roi'
+    | '/settings/account'
+    | '/settings/preferences'
+    | '/settings/profile'
+    | '/settings/roles'
+    | '/settings/security'
     | '/trips/$tripId'
     | '/trips/history'
     | '/trips/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
     | '/drivers'
+    | '/expenses'
+    | '/fuel'
     | '/maintenance'
+    | '/reports'
+    | '/settings'
     | '/trips'
     | '/vehicles'
     | '/drivers/$driverId/edit'
@@ -367,25 +645,51 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/_public'
+    | '/_app/ai-copilot'
     | '/_app/dashboard'
     | '/_app/drivers'
+    | '/_app/expenses'
+    | '/_app/fuel'
     | '/_app/maintenance'
+    | '/_app/notifications'
+    | '/_app/reports'
+    | '/_app/settings'
     | '/_app/trips'
     | '/_app/vehicles'
     | '/_public/forgot-password'
     | '/_public/login'
     | '/_app/drivers/$driverId'
     | '/_app/drivers/new'
+    | '/_app/expenses/$expenseId'
+    | '/_app/expenses/history'
+    | '/_app/expenses/new'
+    | '/_app/fuel/$fuelLogId'
+    | '/_app/fuel/history'
+    | '/_app/fuel/new'
     | '/_app/maintenance/$maintenanceId'
     | '/_app/maintenance/new'
     | '/_app/maintenance/schedule'
+    | '/_app/reports/expenses'
+    | '/_app/reports/export'
+    | '/_app/reports/fleet'
+    | '/_app/reports/fuel'
+    | '/_app/reports/roi'
+    | '/_app/settings/account'
+    | '/_app/settings/preferences'
+    | '/_app/settings/profile'
+    | '/_app/settings/roles'
+    | '/_app/settings/security'
     | '/_app/trips/$tripId'
     | '/_app/trips/history'
     | '/_app/trips/new'
     | '/_app/vehicles/$vehicleId'
     | '/_app/vehicles/new'
     | '/_app/drivers/'
+    | '/_app/expenses/'
+    | '/_app/fuel/'
     | '/_app/maintenance/'
+    | '/_app/reports/'
+    | '/_app/settings/'
     | '/_app/trips/'
     | '/_app/vehicles/'
     | '/_app/drivers/$driverId/edit'
@@ -455,11 +759,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTripsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reports': {
+      id: '/_app/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/maintenance': {
       id: '/_app/maintenance'
       path: '/maintenance'
       fullPath: '/maintenance'
       preLoaderRoute: typeof AppMaintenanceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/fuel': {
+      id: '/_app/fuel'
+      path: '/fuel'
+      fullPath: '/fuel'
+      preLoaderRoute: typeof AppFuelRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/expenses': {
+      id: '/_app/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof AppExpensesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/drivers': {
@@ -476,6 +815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai-copilot': {
+      id: '/_app/ai-copilot'
+      path: '/ai-copilot'
+      fullPath: '/ai-copilot'
+      preLoaderRoute: typeof AppAiCopilotRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/vehicles/': {
       id: '/_app/vehicles/'
       path: '/'
@@ -490,12 +836,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTripsIndexRouteImport
       parentRoute: typeof AppTripsRoute
     }
+    '/_app/settings/': {
+      id: '/_app/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/reports/': {
+      id: '/_app/reports/'
+      path: '/'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AppReportsIndexRouteImport
+      parentRoute: typeof AppReportsRoute
+    }
     '/_app/maintenance/': {
       id: '/_app/maintenance/'
       path: '/'
       fullPath: '/maintenance/'
       preLoaderRoute: typeof AppMaintenanceIndexRouteImport
       parentRoute: typeof AppMaintenanceRoute
+    }
+    '/_app/fuel/': {
+      id: '/_app/fuel/'
+      path: '/'
+      fullPath: '/fuel/'
+      preLoaderRoute: typeof AppFuelIndexRouteImport
+      parentRoute: typeof AppFuelRoute
+    }
+    '/_app/expenses/': {
+      id: '/_app/expenses/'
+      path: '/'
+      fullPath: '/expenses/'
+      preLoaderRoute: typeof AppExpensesIndexRouteImport
+      parentRoute: typeof AppExpensesRoute
     }
     '/_app/drivers/': {
       id: '/_app/drivers/'
@@ -539,6 +913,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTripsTripIdRouteImport
       parentRoute: typeof AppTripsRoute
     }
+    '/_app/settings/security': {
+      id: '/_app/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof AppSettingsSecurityRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/roles': {
+      id: '/_app/settings/roles'
+      path: '/roles'
+      fullPath: '/settings/roles'
+      preLoaderRoute: typeof AppSettingsRolesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/profile': {
+      id: '/_app/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AppSettingsProfileRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/preferences': {
+      id: '/_app/settings/preferences'
+      path: '/preferences'
+      fullPath: '/settings/preferences'
+      preLoaderRoute: typeof AppSettingsPreferencesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/account': {
+      id: '/_app/settings/account'
+      path: '/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AppSettingsAccountRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/reports/roi': {
+      id: '/_app/reports/roi'
+      path: '/roi'
+      fullPath: '/reports/roi'
+      preLoaderRoute: typeof AppReportsRoiRouteImport
+      parentRoute: typeof AppReportsRoute
+    }
+    '/_app/reports/fuel': {
+      id: '/_app/reports/fuel'
+      path: '/fuel'
+      fullPath: '/reports/fuel'
+      preLoaderRoute: typeof AppReportsFuelRouteImport
+      parentRoute: typeof AppReportsRoute
+    }
+    '/_app/reports/fleet': {
+      id: '/_app/reports/fleet'
+      path: '/fleet'
+      fullPath: '/reports/fleet'
+      preLoaderRoute: typeof AppReportsFleetRouteImport
+      parentRoute: typeof AppReportsRoute
+    }
+    '/_app/reports/export': {
+      id: '/_app/reports/export'
+      path: '/export'
+      fullPath: '/reports/export'
+      preLoaderRoute: typeof AppReportsExportRouteImport
+      parentRoute: typeof AppReportsRoute
+    }
+    '/_app/reports/expenses': {
+      id: '/_app/reports/expenses'
+      path: '/expenses'
+      fullPath: '/reports/expenses'
+      preLoaderRoute: typeof AppReportsExpensesRouteImport
+      parentRoute: typeof AppReportsRoute
+    }
     '/_app/maintenance/schedule': {
       id: '/_app/maintenance/schedule'
       path: '/schedule'
@@ -559,6 +1003,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/maintenance/$maintenanceId'
       preLoaderRoute: typeof AppMaintenanceMaintenanceIdRouteImport
       parentRoute: typeof AppMaintenanceRoute
+    }
+    '/_app/fuel/new': {
+      id: '/_app/fuel/new'
+      path: '/new'
+      fullPath: '/fuel/new'
+      preLoaderRoute: typeof AppFuelNewRouteImport
+      parentRoute: typeof AppFuelRoute
+    }
+    '/_app/fuel/history': {
+      id: '/_app/fuel/history'
+      path: '/history'
+      fullPath: '/fuel/history'
+      preLoaderRoute: typeof AppFuelHistoryRouteImport
+      parentRoute: typeof AppFuelRoute
+    }
+    '/_app/fuel/$fuelLogId': {
+      id: '/_app/fuel/$fuelLogId'
+      path: '/$fuelLogId'
+      fullPath: '/fuel/$fuelLogId'
+      preLoaderRoute: typeof AppFuelFuelLogIdRouteImport
+      parentRoute: typeof AppFuelRoute
+    }
+    '/_app/expenses/new': {
+      id: '/_app/expenses/new'
+      path: '/new'
+      fullPath: '/expenses/new'
+      preLoaderRoute: typeof AppExpensesNewRouteImport
+      parentRoute: typeof AppExpensesRoute
+    }
+    '/_app/expenses/history': {
+      id: '/_app/expenses/history'
+      path: '/history'
+      fullPath: '/expenses/history'
+      preLoaderRoute: typeof AppExpensesHistoryRouteImport
+      parentRoute: typeof AppExpensesRoute
+    }
+    '/_app/expenses/$expenseId': {
+      id: '/_app/expenses/$expenseId'
+      path: '/$expenseId'
+      fullPath: '/expenses/$expenseId'
+      preLoaderRoute: typeof AppExpensesExpenseIdRouteImport
+      parentRoute: typeof AppExpensesRoute
     }
     '/_app/drivers/new': {
       id: '/_app/drivers/new'
@@ -662,6 +1148,41 @@ const AppDriversRouteWithChildren = AppDriversRoute._addFileChildren(
   AppDriversRouteChildren,
 )
 
+interface AppExpensesRouteChildren {
+  AppExpensesExpenseIdRoute: typeof AppExpensesExpenseIdRoute
+  AppExpensesHistoryRoute: typeof AppExpensesHistoryRoute
+  AppExpensesNewRoute: typeof AppExpensesNewRoute
+  AppExpensesIndexRoute: typeof AppExpensesIndexRoute
+}
+
+const AppExpensesRouteChildren: AppExpensesRouteChildren = {
+  AppExpensesExpenseIdRoute: AppExpensesExpenseIdRoute,
+  AppExpensesHistoryRoute: AppExpensesHistoryRoute,
+  AppExpensesNewRoute: AppExpensesNewRoute,
+  AppExpensesIndexRoute: AppExpensesIndexRoute,
+}
+
+const AppExpensesRouteWithChildren = AppExpensesRoute._addFileChildren(
+  AppExpensesRouteChildren,
+)
+
+interface AppFuelRouteChildren {
+  AppFuelFuelLogIdRoute: typeof AppFuelFuelLogIdRoute
+  AppFuelHistoryRoute: typeof AppFuelHistoryRoute
+  AppFuelNewRoute: typeof AppFuelNewRoute
+  AppFuelIndexRoute: typeof AppFuelIndexRoute
+}
+
+const AppFuelRouteChildren: AppFuelRouteChildren = {
+  AppFuelFuelLogIdRoute: AppFuelFuelLogIdRoute,
+  AppFuelHistoryRoute: AppFuelHistoryRoute,
+  AppFuelNewRoute: AppFuelNewRoute,
+  AppFuelIndexRoute: AppFuelIndexRoute,
+}
+
+const AppFuelRouteWithChildren =
+  AppFuelRoute._addFileChildren(AppFuelRouteChildren)
+
 interface AppMaintenanceMaintenanceIdRouteChildren {
   AppMaintenanceMaintenanceIdEditRoute: typeof AppMaintenanceMaintenanceIdEditRoute
 }
@@ -693,6 +1214,50 @@ const AppMaintenanceRouteChildren: AppMaintenanceRouteChildren = {
 
 const AppMaintenanceRouteWithChildren = AppMaintenanceRoute._addFileChildren(
   AppMaintenanceRouteChildren,
+)
+
+interface AppReportsRouteChildren {
+  AppReportsExpensesRoute: typeof AppReportsExpensesRoute
+  AppReportsExportRoute: typeof AppReportsExportRoute
+  AppReportsFleetRoute: typeof AppReportsFleetRoute
+  AppReportsFuelRoute: typeof AppReportsFuelRoute
+  AppReportsRoiRoute: typeof AppReportsRoiRoute
+  AppReportsIndexRoute: typeof AppReportsIndexRoute
+}
+
+const AppReportsRouteChildren: AppReportsRouteChildren = {
+  AppReportsExpensesRoute: AppReportsExpensesRoute,
+  AppReportsExportRoute: AppReportsExportRoute,
+  AppReportsFleetRoute: AppReportsFleetRoute,
+  AppReportsFuelRoute: AppReportsFuelRoute,
+  AppReportsRoiRoute: AppReportsRoiRoute,
+  AppReportsIndexRoute: AppReportsIndexRoute,
+}
+
+const AppReportsRouteWithChildren = AppReportsRoute._addFileChildren(
+  AppReportsRouteChildren,
+)
+
+interface AppSettingsRouteChildren {
+  AppSettingsAccountRoute: typeof AppSettingsAccountRoute
+  AppSettingsPreferencesRoute: typeof AppSettingsPreferencesRoute
+  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
+  AppSettingsRolesRoute: typeof AppSettingsRolesRoute
+  AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
+}
+
+const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsAccountRoute: AppSettingsAccountRoute,
+  AppSettingsPreferencesRoute: AppSettingsPreferencesRoute,
+  AppSettingsProfileRoute: AppSettingsProfileRoute,
+  AppSettingsRolesRoute: AppSettingsRolesRoute,
+  AppSettingsSecurityRoute: AppSettingsSecurityRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
+}
+
+const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
+  AppSettingsRouteChildren,
 )
 
 interface AppTripsTripIdRouteChildren {
@@ -759,17 +1324,29 @@ const AppVehiclesRouteWithChildren = AppVehiclesRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAiCopilotRoute: typeof AppAiCopilotRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDriversRoute: typeof AppDriversRouteWithChildren
+  AppExpensesRoute: typeof AppExpensesRouteWithChildren
+  AppFuelRoute: typeof AppFuelRouteWithChildren
   AppMaintenanceRoute: typeof AppMaintenanceRouteWithChildren
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppReportsRoute: typeof AppReportsRouteWithChildren
+  AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppTripsRoute: typeof AppTripsRouteWithChildren
   AppVehiclesRoute: typeof AppVehiclesRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAiCopilotRoute: AppAiCopilotRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDriversRoute: AppDriversRouteWithChildren,
+  AppExpensesRoute: AppExpensesRouteWithChildren,
+  AppFuelRoute: AppFuelRouteWithChildren,
   AppMaintenanceRoute: AppMaintenanceRouteWithChildren,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppReportsRoute: AppReportsRouteWithChildren,
+  AppSettingsRoute: AppSettingsRouteWithChildren,
   AppTripsRoute: AppTripsRouteWithChildren,
   AppVehiclesRoute: AppVehiclesRouteWithChildren,
 }
