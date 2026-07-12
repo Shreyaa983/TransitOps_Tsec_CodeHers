@@ -25,7 +25,7 @@ const updateStatus = asyncHandler(async (req, res) => {
     const driver = await Driver.findByIdAndUpdate(
         req.params.id,
         { status },
-        { new: true }
+        { new: true, runValidators: true }
     );
 
     if (!driver) {
@@ -41,6 +41,50 @@ const updateStatus = asyncHandler(async (req, res) => {
     });
 });
 
+// PATCH /drivers/me/status
+const updateMyStatus = asyncHandler(async (req, res) => {
+    let driver = req.user.driver;
+
+    if (!driver) {
+        driver = await Driver.findOne({
+            user: req.user._id,
+        });
+
+        if (!driver) {
+            return res.status(404).json({
+                success: false,
+                message: "No driver profile linked to this user",
+            });
+        }
+    }
+
+    const { status } = req.body;
+
+    const allowed = [
+        "AVAILABLE",
+        "ON_TRIP",
+        "OFF_DUTY",
+        "SUSPENDED",
+    ];
+
+    const normalized = status?.toUpperCase();
+
+    if (!allowed.includes(normalized)) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid driver status",
+        });
+    }
+
+    driver.status = normalized;
+    await driver.save();
+
+    res.json({
+        success: true,
+        data: driver,
+    });
+});
+
 // GET /drivers/available
 const getAvailableDrivers = asyncHandler(async (_req, res) => {
     const today = new Date();
@@ -48,7 +92,7 @@ const getAvailableDrivers = asyncHandler(async (_req, res) => {
     const drivers = await Driver.find({
         status: "AVAILABLE",
         licenseExpiry: { $gte: today },
-    });
+    }).populate("user", "name email");
 
     res.json({
         success: true,
@@ -57,16 +101,17 @@ const getAvailableDrivers = asyncHandler(async (_req, res) => {
 });
 
 // GET /drivers/eligible
-// Used while creating trips
 const getEligibleDrivers = asyncHandler(async (_req, res) => {
     const today = new Date();
 
     const drivers = await Driver.find({
         status: "AVAILABLE",
         licenseExpiry: { $gte: today },
-    }).select(
-        "name licenseNumber licenseCategory safetyScore status"
-    );
+    })
+        .populate("user", "name email")
+        .select(
+            "user licenseNumber licenseCategory safetyScore status"
+        );
 
     res.json({
         success: true,
@@ -74,13 +119,13 @@ const getEligibleDrivers = asyncHandler(async (_req, res) => {
     });
 });
 
-// GET /drivers/license-expiring?days=30
+// GET /drivers/license-expiring
 const getExpiringLicenses = asyncHandler(async (req, res) => {
     const days = Number(req.query.days) || 30;
 
     const today = new Date();
-
     const future = new Date();
+
     future.setDate(today.getDate() + days);
 
     const drivers = await Driver.find({
@@ -88,7 +133,7 @@ const getExpiringLicenses = asyncHandler(async (req, res) => {
             $gte: today,
             $lte: future,
         },
-    });
+    }).populate("user", "name email");
 
     res.json({
         success: true,
@@ -100,7 +145,7 @@ const getExpiringLicenses = asyncHandler(async (req, res) => {
 const getSuspendedDrivers = asyncHandler(async (_req, res) => {
     const drivers = await Driver.find({
         status: "SUSPENDED",
-    });
+    }).populate("user", "name email");
 
     res.json({
         success: true,
@@ -110,9 +155,11 @@ const getSuspendedDrivers = asyncHandler(async (_req, res) => {
 
 // GET /drivers/:id/license
 const getLicenseDetails = asyncHandler(async (req, res) => {
-    const driver = await Driver.findById(req.params.id).select(
-        "name licenseNumber licenseCategory licenseExpiry"
-    );
+    const driver = await Driver.findById(req.params.id)
+        .populate("user", "name email")
+        .select(
+            "user licenseNumber licenseCategory licenseExpiry"
+        );
 
     if (!driver) {
         return res.status(404).json({
@@ -131,14 +178,11 @@ export default {
     ...crud,
 
     updateStatus,
+    updateMyStatus,
 
     getAvailableDrivers,
-
     getEligibleDrivers,
-
     getExpiringLicenses,
-
     getSuspendedDrivers,
-
     getLicenseDetails,
 };
