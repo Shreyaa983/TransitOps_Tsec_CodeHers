@@ -10,12 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PublicLoginRouteImport } from './routes/_public.login'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public.forgot-password'
+import { Route as AppVehiclesRouteImport } from './routes/_app.vehicles'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppVehiclesIndexRouteImport } from './routes/_app.vehicles.index'
+import { Route as AppVehiclesNewRouteImport } from './routes/_app.vehicles.new'
+import { Route as AppVehiclesVehicleIdRouteImport } from './routes/_app.vehicles.$vehicleId'
+import { Route as AppVehiclesVehicleIdEditRouteImport } from './routes/_app.vehicles.$vehicleId.edit'
+import { Route as AppVehiclesVehicleIdDocumentsRouteImport } from './routes/_app.vehicles.$vehicleId.documents'
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -33,39 +45,125 @@ const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => PublicRoute,
 } as any)
+const AppVehiclesRoute = AppVehiclesRouteImport.update({
+  id: '/vehicles',
+  path: '/vehicles',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVehiclesIndexRoute = AppVehiclesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppVehiclesRoute,
+} as any)
+const AppVehiclesNewRoute = AppVehiclesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppVehiclesRoute,
+} as any)
+const AppVehiclesVehicleIdRoute = AppVehiclesVehicleIdRouteImport.update({
+  id: '/$vehicleId',
+  path: '/$vehicleId',
+  getParentRoute: () => AppVehiclesRoute,
+} as any)
+const AppVehiclesVehicleIdEditRoute =
+  AppVehiclesVehicleIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AppVehiclesVehicleIdRoute,
+  } as any)
+const AppVehiclesVehicleIdDocumentsRoute =
+  AppVehiclesVehicleIdDocumentsRouteImport.update({
+    id: '/documents',
+    path: '/documents',
+    getParentRoute: () => AppVehiclesVehicleIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/vehicles': typeof AppVehiclesRouteWithChildren
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
+  '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
+  '/vehicles/new': typeof AppVehiclesNewRoute
+  '/vehicles/': typeof AppVehiclesIndexRoute
+  '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
+  '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof AppDashboardRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
+  '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
+  '/vehicles/new': typeof AppVehiclesNewRoute
+  '/vehicles': typeof AppVehiclesIndexRoute
+  '/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
+  '/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/vehicles': typeof AppVehiclesRouteWithChildren
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
+  '/_app/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
+  '/_app/vehicles/new': typeof AppVehiclesNewRoute
+  '/_app/vehicles/': typeof AppVehiclesIndexRoute
+  '/_app/vehicles/$vehicleId/documents': typeof AppVehiclesVehicleIdDocumentsRoute
+  '/_app/vehicles/$vehicleId/edit': typeof AppVehiclesVehicleIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/forgot-password' | '/login'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/vehicles'
+    | '/forgot-password'
+    | '/login'
+    | '/vehicles/$vehicleId'
+    | '/vehicles/new'
+    | '/vehicles/'
+    | '/vehicles/$vehicleId/documents'
+    | '/vehicles/$vehicleId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/forgot-password' | '/login'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/forgot-password'
+    | '/login'
+    | '/vehicles/$vehicleId'
+    | '/vehicles/new'
+    | '/vehicles'
+    | '/vehicles/$vehicleId/documents'
+    | '/vehicles/$vehicleId/edit'
   id:
     | '__root__'
     | '/'
+    | '/_app'
     | '/_public'
+    | '/_app/dashboard'
+    | '/_app/vehicles'
     | '/_public/forgot-password'
     | '/_public/login'
+    | '/_app/vehicles/$vehicleId'
+    | '/_app/vehicles/new'
+    | '/_app/vehicles/'
+    | '/_app/vehicles/$vehicleId/documents'
+    | '/_app/vehicles/$vehicleId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   PublicRoute: typeof PublicRouteWithChildren
 }
 
@@ -76,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof PublicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -99,8 +204,98 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicForgotPasswordRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_app/vehicles': {
+      id: '/_app/vehicles'
+      path: '/vehicles'
+      fullPath: '/vehicles'
+      preLoaderRoute: typeof AppVehiclesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/vehicles/': {
+      id: '/_app/vehicles/'
+      path: '/'
+      fullPath: '/vehicles/'
+      preLoaderRoute: typeof AppVehiclesIndexRouteImport
+      parentRoute: typeof AppVehiclesRoute
+    }
+    '/_app/vehicles/new': {
+      id: '/_app/vehicles/new'
+      path: '/new'
+      fullPath: '/vehicles/new'
+      preLoaderRoute: typeof AppVehiclesNewRouteImport
+      parentRoute: typeof AppVehiclesRoute
+    }
+    '/_app/vehicles/$vehicleId': {
+      id: '/_app/vehicles/$vehicleId'
+      path: '/$vehicleId'
+      fullPath: '/vehicles/$vehicleId'
+      preLoaderRoute: typeof AppVehiclesVehicleIdRouteImport
+      parentRoute: typeof AppVehiclesRoute
+    }
+    '/_app/vehicles/$vehicleId/edit': {
+      id: '/_app/vehicles/$vehicleId/edit'
+      path: '/edit'
+      fullPath: '/vehicles/$vehicleId/edit'
+      preLoaderRoute: typeof AppVehiclesVehicleIdEditRouteImport
+      parentRoute: typeof AppVehiclesVehicleIdRoute
+    }
+    '/_app/vehicles/$vehicleId/documents': {
+      id: '/_app/vehicles/$vehicleId/documents'
+      path: '/documents'
+      fullPath: '/vehicles/$vehicleId/documents'
+      preLoaderRoute: typeof AppVehiclesVehicleIdDocumentsRouteImport
+      parentRoute: typeof AppVehiclesVehicleIdRoute
+    }
   }
 }
+
+interface AppVehiclesVehicleIdRouteChildren {
+  AppVehiclesVehicleIdDocumentsRoute: typeof AppVehiclesVehicleIdDocumentsRoute
+  AppVehiclesVehicleIdEditRoute: typeof AppVehiclesVehicleIdEditRoute
+}
+
+const AppVehiclesVehicleIdRouteChildren: AppVehiclesVehicleIdRouteChildren = {
+  AppVehiclesVehicleIdDocumentsRoute: AppVehiclesVehicleIdDocumentsRoute,
+  AppVehiclesVehicleIdEditRoute: AppVehiclesVehicleIdEditRoute,
+}
+
+const AppVehiclesVehicleIdRouteWithChildren =
+  AppVehiclesVehicleIdRoute._addFileChildren(AppVehiclesVehicleIdRouteChildren)
+
+interface AppVehiclesRouteChildren {
+  AppVehiclesVehicleIdRoute: typeof AppVehiclesVehicleIdRouteWithChildren
+  AppVehiclesNewRoute: typeof AppVehiclesNewRoute
+  AppVehiclesIndexRoute: typeof AppVehiclesIndexRoute
+}
+
+const AppVehiclesRouteChildren: AppVehiclesRouteChildren = {
+  AppVehiclesVehicleIdRoute: AppVehiclesVehicleIdRouteWithChildren,
+  AppVehiclesNewRoute: AppVehiclesNewRoute,
+  AppVehiclesIndexRoute: AppVehiclesIndexRoute,
+}
+
+const AppVehiclesRouteWithChildren = AppVehiclesRoute._addFileChildren(
+  AppVehiclesRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppVehiclesRoute: typeof AppVehiclesRouteWithChildren
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
+  AppVehiclesRoute: AppVehiclesRouteWithChildren,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface PublicRouteChildren {
   PublicForgotPasswordRoute: typeof PublicForgotPasswordRoute
@@ -117,6 +312,7 @@ const PublicRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
 }
 export const routeTree = rootRouteImport
