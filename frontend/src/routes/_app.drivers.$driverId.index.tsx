@@ -1,13 +1,13 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { useTransitStore } from "@/lib/store";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { daysUntil, shortDate } from "@/lib/format";
-import { driversApi, type DriverStatus } from "@/lib/drivers-api";
+import { driversApi } from "@/lib/drivers-api";
 import { AlertTriangle, Pencil, ArrowLeft, IdCard } from "lucide-react";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/drivers/$driverId/")({
   head: () => ({ meta: [{ title: "Driver — TransitOps" }] }),
@@ -18,23 +18,10 @@ function DriverDetail() {
   const { driverId } = useParams({ from: "/_app/drivers/$driverId/" });
   const trips = useTransitStore((s) => s.trips);
   const vehicles = useTransitStore((s) => s.vehicles);
-  const qc = useQueryClient();
 
   const { data: d, isLoading, isError } = useQuery({
     queryKey: ["drivers", driverId],
     queryFn: () => driversApi.getOne(driverId),
-  });
-
-  const mutation = useMutation({
-    mutationFn: (status: DriverStatus) => driversApi.updateStatus(driverId, status),
-    onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: ["drivers"] });
-      qc.setQueryData(["drivers", driverId], updated);
-      toast.success(`Status changed to ${updated.status.toLowerCase().replace("_", " ")}`);
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update status");
-    },
   });
 
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading driver…</div>;
@@ -68,23 +55,6 @@ function DriverDetail() {
               {(expired || days < 15) && <AlertTriangle className="h-3 w-3 inline mr-1" />}{shortDate(d.licenseExpiry)}
             </Row>
           </dl>
-          <div className="mt-4 pt-3 border-t border-border-soft">
-            <div className="text-xs font-bold text-muted-foreground mb-2">Update Driver Status:</div>
-            <div className="flex gap-1.5 flex-wrap">
-              {(["AVAILABLE", "ON_TRIP", "OFF_DUTY"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => mutation.mutate(s)}
-                  disabled={mutation.isPending}
-                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${
-                    d.status === s ? "bg-primary text-primary-foreground scale-105" : "bg-muted/50 hover:bg-muted"
-                  }`}
-                >
-                  {s === "AVAILABLE" ? "Available" : s === "ON_TRIP" ? "On Trip" : "Off Duty"}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
         <div className="brutal-card p-5 lg:col-span-2">
           <h3 className="font-bold mb-3">Safety score</h3>

@@ -1,10 +1,8 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { useTransitStore } from "@/lib/store";
-import { tripsApi } from "@/lib/trips-api";
 import { kg, km, money, shortDate } from "@/lib/format";
 import { ArrowLeft, MapPin, ArrowRight, Play, CheckCircle2, XCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -16,41 +14,10 @@ export const Route = createFileRoute("/_app/trips/$tripId")({
 
 function TripDetail() {
   const { tripId } = useParams({ from: "/_app/trips/$tripId" });
-  const { vehicles, drivers } = useTransitStore();
-  const qc = useQueryClient();
-
-  const { data: t, isLoading, isError } = useQuery({
-    queryKey: ["trips", tripId],
-    queryFn: () => tripsApi.getOne(tripId),
-  });
-
-  const dispatchMutation = useMutation({
-    mutationFn: () => tripsApi.dispatch(tripId),
-    onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: ["trips"] });
-      qc.setQueryData(["trips", tripId], updated);
-      toast.success(`Trip ${updated.code} dispatched`);
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Unable to dispatch");
-    },
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: () => tripsApi.cancel(tripId),
-    onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: ["trips"] });
-      qc.setQueryData(["trips", tripId], updated);
-      toast.success(`Trip ${updated.code} cancelled`);
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to cancel trip");
-    },
-  });
-
-  if (isLoading) return <div className="text-sm text-muted-foreground">Loading trip details…</div>;
-  if (isError || !t) return <EmptyState title="Trip not found" />;
-
+  const { trips, vehicles, drivers, dispatchTrip, completeTrip, cancelTrip } = useTransitStore();
+  const nav = useNavigate();
+  const t = trips.find((x) => x.id === tripId);
+  if (!t) return <EmptyState title="Trip not found" />;
   const v = vehicles.find((x) => x.id === t.vehicleId);
   const d = drivers.find((x) => x.id === t.driverId);
 
@@ -60,6 +27,12 @@ function TripDetail() {
     { key: "completed", label: "Completed" },
   ];
   const activeIdx = t.status === "cancelled" ? -1 : timeline.findIndex((s) => s.key === t.status);
+
+  const doDispatch = () => {
+    const res = dispatchTrip(t.id);
+    if (!res.ok) return toast.error(res.error ?? "Unable to dispatch");
+    toast.success(`Trip ${t.code} dispatched`);
+  };
 
   return (
     <div>
@@ -71,28 +44,13 @@ function TripDetail() {
             <Link to="/trips" className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><ArrowLeft className="h-4 w-4" /> Back</Link>
             <Link to="/trips/$tripId/edit" params={{ tripId: t.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
             {t.status === "draft" && (
-              <Button 
-                onClick={() => dispatchMutation.mutate()} 
-                disabled={dispatchMutation.isPending} 
-                className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Play className="h-4 w-4 mr-1" /> Dispatch
-              </Button>
+              <Button onClick={doDispatch} className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"><Play className="h-4 w-4 mr-1" /> Dispatch</Button>
             )}
             {t.status === "dispatched" && (
-              <Link to="/trips/$tripId/complete" params={{ tripId: t.id }}>
-                <Button className="brutal-btn bg-success text-success-foreground"><CheckCircle2 className="h-4 w-4 mr-1" /> Complete</Button>
-              </Link>
+              <Button onClick={() => { completeTrip(t.id); toast.success("Trip completed"); }} className="brutal-btn bg-success text-success-foreground"><CheckCircle2 className="h-4 w-4 mr-1" /> Complete</Button>
             )}
             {(t.status === "draft" || t.status === "dispatched") && (
-              <Button 
-                variant="outline" 
-                onClick={() => cancelMutation.mutate()} 
-                disabled={cancelMutation.isPending} 
-                className="brutal-btn bg-card"
-              >
-                <XCircle className="h-4 w-4 mr-1" /> Cancel
-              </Button>
+              <Button variant="outline" onClick={() => { cancelTrip(t.id); toast.success("Trip cancelled"); }} className="brutal-btn bg-card"><XCircle className="h-4 w-4 mr-1" /> Cancel</Button>
             )}
           </div>
         }
@@ -147,7 +105,7 @@ function TripDetail() {
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Estimated cost</div>
-              <div className="font-semibold">{money(Math.round(t.distanceKm * 1.6))}</div>
+              <div className="font-semibold">{money(t.costUSD ?? Math.round(t.distanceKm * 1.6))}</div>
             </div>
           </div>
         </div>
@@ -155,7 +113,6 @@ function TripDetail() {
     </div>
   );
 }
-
 function Info({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><dt className="text-xs text-muted-foreground">{label}</dt><dd className="font-semibold mt-0.5">{children}</dd></div>;
 }

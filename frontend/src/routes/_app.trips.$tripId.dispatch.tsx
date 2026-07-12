@@ -16,27 +16,15 @@ function DispatchAction() {
   const nav = useNavigate();
 
   useEffect(() => {
-    const run = async () => {
-      const res = await dispatch(tripId);
-      if (res.ok) {
-        toast.success("Trip dispatched");
-        nav({ to: "/trips/$tripId", params: { tripId } });
-      } else {
-        toast.error(res.error ?? "Unable to dispatch");
-        nav({ to: "/trips/$tripId", params: { tripId } });
-      }
-    };
-    run();
-  }, [tripId, dispatch, nav]);
+    const res = dispatch(tripId);
+    if (res.ok) { toast.success("Trip dispatched"); nav({ to: "/trips/$tripId", params: { tripId } }); }
+    else { toast.error(res.error ?? "Unable to dispatch"); }
+  }, [tripId]);
 
   return (
     <div>
       <PageHeader title="Dispatching…" subtitle="Applying business rules." />
-      <div className="brutal-card p-6">
-        <Button className="brutal-btn" onClick={() => nav({ to: "/trips/$tripId", params: { tripId } })}>
-          Back to trip
-        </Button>
-      </div>
+      <div className="brutal-card p-6"><Button className="brutal-btn" onClick={() => nav({ to: "/trips/$tripId", params: { tripId } })}>Back to trip</Button></div>
     </div>
   );
 }
