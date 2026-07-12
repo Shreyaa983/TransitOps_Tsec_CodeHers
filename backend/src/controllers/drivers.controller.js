@@ -1,6 +1,7 @@
 import Driver from "../models/driver.model.js";
 import { buildCrudController } from "./crud.controller.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { safeNotify, notifyDriverStatusChanged } from "../services/driver-notification.service.js";
 
 const crud = buildCrudController(Driver);
 
@@ -34,6 +35,8 @@ const updateStatus = asyncHandler(async (req, res) => {
             message: "Driver not found",
         });
     }
+
+    safeNotify(notifyDriverStatusChanged(driver, status, true));
 
     res.json({
         success: true,

@@ -91,6 +91,7 @@ export const tripCreateValidators = [
   body('fuelConsumed').optional().isNumeric().withMessage('fuelConsumed must be a number'),
   body('status').optional().isIn(['DRAFT', 'DISPATCHED', 'COMPLETED', 'CANCELLED']).withMessage('Invalid status'),
   optionalDate('dispatchTime'),
+  optionalDate('scheduledStartTime'),
   optionalDate('completionTime'),
 ];
 
@@ -105,6 +106,7 @@ export const tripUpdateValidators = [
   optionalNumber('fuelConsumed'),
   body('status').optional().isIn(['DRAFT', 'DISPATCHED', 'COMPLETED', 'CANCELLED']).withMessage('Invalid status'),
   optionalDate('dispatchTime'),
+  optionalDate('scheduledStartTime'),
   optionalDate('completionTime'),
 ];
 
