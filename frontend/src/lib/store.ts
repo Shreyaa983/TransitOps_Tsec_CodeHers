@@ -29,11 +29,11 @@ type Actions = {
 
   syncWithBackend: () => Promise<void>;
 
-  addTrip: (t: Trip) => void;
-  updateTrip: (id: string, patch: Partial<Trip>) => void;
-  dispatchTrip: (id: string) => { ok: boolean; error?: string };
-  completeTrip: (id: string) => void;
-  cancelTrip: (id: string) => void;
+  addTrip: (t: Trip) => Promise<void>;
+  updateTrip: (id: string, patch: Partial<Trip>) => Promise<void>;
+  dispatchTrip: (id: string) => Promise<{ ok: boolean; error?: string }>;
+  completeTrip: (id: string, actualDistance?: number, fuelConsumed?: number, finalOdometer?: number) => Promise<{ ok: boolean; error?: string }>;
+  cancelTrip: (id: string) => Promise<{ ok: boolean; error?: string }>;
 
   addMaintenance: (m: MaintenanceLog) => void;
   updateMaintenance: (id: string, patch: Partial<MaintenanceLog>) => void;
@@ -195,10 +195,41 @@ export const useTransitStore = create<State & Actions>()(
         }
       },
 
-      addTrip: (t) => set((s) => ({ trips: [t, ...s.trips] })),
-      updateTrip: (id, patch) => set((s) => ({ trips: s.trips.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
+      addTrip: async (t) => {
+        set((s) => ({ trips: [t, ...s.trips] }));
+        if (useAuth.getState().token) {
+          try {
+            await api.post("/trips", {
+              vehicle: t.vehicleId,
+              driver: t.driverId,
+              source: t.source,
+              destination: t.destination,
+              cargoWeight: t.cargoKg,
+              plannedDistance: t.distanceKm,
+              status: "DRAFT",
+            });
+            await get().syncWithBackend();
+          } catch {}
+        }
+      },
+      updateTrip: async (id, patch) => {
+        set((s) => ({ trips: s.trips.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
+        if (useAuth.getState().token) {
+          try {
+            const backendPatch: any = {};
+            if (patch.source !== undefined) backendPatch.source = patch.source;
+            if (patch.destination !== undefined) backendPatch.destination = patch.destination;
+            if (patch.vehicleId !== undefined) backendPatch.vehicle = patch.vehicleId;
+            if (patch.driverId !== undefined) backendPatch.driver = patch.driverId;
+            if (patch.cargoKg !== undefined) backendPatch.cargoWeight = patch.cargoKg;
+            if (patch.distanceKm !== undefined) backendPatch.plannedDistance = patch.distanceKm;
+            await api.patch(`/trips/${id}`, backendPatch);
+            await get().syncWithBackend();
+          } catch {}
+        }
+      },
 
-      dispatchTrip: (id) => {
+      dispatchTrip: async (id) => {
         const { trips, vehicles, drivers } = get();
         const trip = trips.find((t) => t.id === id);
         if (!trip) return { ok: false, error: "Trip not found" };
@@ -211,6 +242,17 @@ export const useTransitStore = create<State & Actions>()(
         if (vehicle.status === "on_trip") return { ok: false, error: "Vehicle is already assigned to another trip." };
         if (new Date(driver.licenseExpiry) < new Date()) return { ok: false, error: "Driver's license is expired." };
         if (trip.cargoKg > vehicle.capacityKg) return { ok: false, error: `Cargo exceeds vehicle capacity (${vehicle.capacityKg}kg).` };
+
+        if (useAuth.getState().token) {
+          try {
+            await api.patch(`/trips/${id}/dispatch`, {});
+            await get().syncWithBackend();
+            return { ok: true };
+          } catch (err: any) {
+            return { ok: false, error: err.message || "Failed to dispatch on backend" };
+          }
+        }
+
         set((s) => ({
           trips: s.trips.map((t) => (t.id === id ? { ...t, status: "dispatched" } : t)),
           vehicles: s.vehicles.map((v) => (v.id === trip.vehicleId ? { ...v, status: "on_trip" } : v)),
@@ -218,21 +260,55 @@ export const useTransitStore = create<State & Actions>()(
         }));
         return { ok: true };
       },
-      completeTrip: (id) => {
+      completeTrip: async (id, actualDistance, fuelConsumed, finalOdometer) => {
         const trip = get().trips.find((t) => t.id === id);
-        if (!trip) return;
+        if (!trip) return { ok: false, error: "Trip not found" };
+        const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
+        if (!vehicle) return { ok: false, error: "Vehicle not found" };
+
+        const actDist = actualDistance ?? trip.distanceKm;
+        const fuel = fuelConsumed ?? Math.round(trip.distanceKm * 0.2);
+        const finalOdo = finalOdometer ?? (vehicle.odometerKm + actDist);
+
+        if (useAuth.getState().token) {
+          try {
+            await api.patch(`/trips/${id}/complete`, {
+              actualDistance: actDist,
+              fuelConsumed: fuel,
+              finalOdometer: finalOdo,
+            });
+            await get().syncWithBackend();
+            return { ok: true };
+          } catch (err: any) {
+            return { ok: false, error: err.message || "Failed to complete trip on backend" };
+          }
+        }
+
         set((s) => ({
           trips: s.trips.map((t) => (t.id === id ? { ...t, status: "completed" } : t)),
-          vehicles: s.vehicles.map((v) => (v.id === trip.vehicleId ? { ...v, status: "available", odometerKm: v.odometerKm + trip.distanceKm } : v)),
+          vehicles: s.vehicles.map((v) => (v.id === trip.vehicleId ? { ...v, status: "available", odometerKm: finalOdo } : v)),
         }));
+        return { ok: true };
       },
-      cancelTrip: (id) => {
+      cancelTrip: async (id) => {
         const trip = get().trips.find((t) => t.id === id);
-        if (!trip) return;
+        if (!trip) return { ok: false, error: "Trip not found" };
+
+        if (useAuth.getState().token) {
+          try {
+            await api.patch(`/trips/${id}/cancel`, {});
+            await get().syncWithBackend();
+            return { ok: true };
+          } catch (err: any) {
+            return { ok: false, error: err.message || "Failed to cancel trip on backend" };
+          }
+        }
+
         set((s) => ({
           trips: s.trips.map((t) => (t.id === id ? { ...t, status: "cancelled" } : t)),
           vehicles: s.vehicles.map((v) => (v.id === trip.vehicleId && v.status === "on_trip" ? { ...v, status: "available" } : v)),
         }));
+        return { ok: true };
       },
 
       addMaintenance: (m) => set((s) => ({ maintenance: [m, ...s.maintenance] })),
