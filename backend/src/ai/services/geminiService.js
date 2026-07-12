@@ -11,7 +11,7 @@ import { extractAndParseJSON } from '../parsers/json.parser.js';
 
 let _client = null;
 
-function getClient() {
+export function getClient() {
   if (!_client) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {

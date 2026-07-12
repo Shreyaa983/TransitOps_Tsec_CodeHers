@@ -3,27 +3,29 @@ import {
   LayoutDashboard, Truck, Users, Route, Wrench, Fuel, Receipt, BarChart3, Sparkles, Bell, Settings, ChevronsLeft, ChevronsRight, AlertTriangle,
 } from "lucide-react";
 import { useAuth, useUI, roleAccess } from "@/lib/store";
+import { useTranslation, type I18nKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { key: "dashboard", to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { key: "vehicles", to: "/vehicles", icon: Truck, label: "Vehicles" },
-  { key: "drivers", to: "/drivers", icon: Users, label: "Drivers" },
-  { key: "trips", to: "/trips", icon: Route, label: "Trips" },
-  { key: "maintenance", to: "/maintenance", icon: Wrench, label: "Maintenance" },
-  { key: "fuel", to: "/fuel", icon: Fuel, label: "Fuel" },
-  { key: "expenses", to: "/expenses", icon: Receipt, label: "Expenses" },
-  { key: "reports", to: "/reports", icon: BarChart3, label: "Reports & Analytics" },
-  { key: "incidents", to: "/incidents", icon: AlertTriangle, label: "Review Incidents" },
-  { key: "report-incident", to: "/report-incident", icon: AlertTriangle, label: "Report Incident" },
-  { key: "ai-copilot", to: "/ai-copilot", icon: Sparkles, label: "AI Copilot" },
-  { key: "notifications", to: "/notifications", icon: Bell, label: "Notifications" },
-  { key: "settings", to: "/settings", icon: Settings, label: "Settings" },
+  { key: "dashboard", to: "/dashboard", icon: LayoutDashboard, labelKey: "nav_dashboard" as I18nKey },
+  { key: "vehicles", to: "/vehicles", icon: Truck, labelKey: "nav_vehicles" as I18nKey },
+  { key: "drivers", to: "/drivers", icon: Users, labelKey: "nav_drivers" as I18nKey },
+  { key: "trips", to: "/trips", icon: Route, labelKey: "nav_trips" as I18nKey },
+  { key: "maintenance", to: "/maintenance", icon: Wrench, labelKey: "nav_maintenance" as I18nKey },
+  { key: "fuel", to: "/fuel", icon: Fuel, labelKey: "nav_fuel" as I18nKey },
+  { key: "expenses", to: "/expenses", icon: Receipt, labelKey: "nav_expenses" as I18nKey },
+  { key: "reports", to: "/reports", icon: BarChart3, labelKey: "nav_reports" as I18nKey },
+  { key: "incidents", to: "/incidents", icon: AlertTriangle, labelKey: "nav_incidents" as I18nKey },
+  { key: "report-incident", to: "/report-incident", icon: AlertTriangle, labelKey: "nav_reportIncident" as I18nKey },
+  { key: "ai-copilot", to: "/ai-copilot", icon: Sparkles, labelKey: "nav_aiCopilot" as I18nKey },
+  { key: "notifications", to: "/notifications", icon: Bell, labelKey: "nav_notifications" as I18nKey },
+  { key: "settings", to: "/settings", icon: Settings, labelKey: "nav_settings" as I18nKey },
 ] as const;
 
 export function AppSidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUI();
   const user = useAuth((s) => s.user);
+  const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const allowed = user ? roleAccess[user.role] : [];
 
@@ -40,8 +42,8 @@ export function AppSidebar() {
         </div>
         {!sidebarCollapsed && (
           <div className="min-w-0">
-            <div className="font-extrabold tracking-tight leading-none">TransitOps</div>
-            <div className="text-[11px] text-muted-foreground mt-0.5">Smart Transport Ops</div>
+            <div className="font-extrabold tracking-tight leading-none">{t("brandName")}</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">{t("brandTagline")}</div>
           </div>
         )}
       </div>
@@ -52,10 +54,10 @@ export function AppSidebar() {
           .map((item) => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             const Icon = item.icon;
-            let displayLabel: string = item.label;
+            let displayLabel = t(item.labelKey);
             if (user?.role === "driver") {
-              if (item.key === "trips") displayLabel = "My Trips";
-              if (item.key === "settings") displayLabel = "My Profile";
+              if (item.key === "trips") displayLabel = t("nav_myTrips");
+              if (item.key === "settings") displayLabel = t("nav_myProfile");
             }
             return (
               <Link
@@ -79,7 +81,7 @@ export function AppSidebar() {
         onClick={toggleSidebar}
         className="mx-2 mb-3 flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-sidebar-accent"
       >
-        {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : (<><ChevronsLeft className="h-4 w-4" /> Collapse</>)}
+        {sidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : (<><ChevronsLeft className="h-4 w-4" /> {t("sidebar_collapse")}</>)}
       </button>
     </aside>
   );

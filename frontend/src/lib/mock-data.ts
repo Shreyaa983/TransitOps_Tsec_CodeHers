@@ -72,13 +72,18 @@ export type Expense = {
   date: string;
 };
 
+export type NotificationTag = "trip" | "license" | "maintenance" | "expense" | "fuel" | "incident";
+
 export type Notification = {
   id: string;
-  title: string;
-  body: string;
+  titleKey: string;
+  bodyKey: string;
+  titleParams?: Record<string, string | number>;
+  bodyParams?: Record<string, string | number>;
   level: "info" | "warning" | "danger" | "success";
   read: boolean;
   createdAt: string;
+  tags?: NotificationTag[];
   actionType?: string;
   incidentPayload?: any;
 };
@@ -147,9 +152,9 @@ export const seedExpenses: Expense[] = [
 ];
 
 export const seedNotifications: Notification[] = [
-  { id: "n1", title: "License expiring soon", body: "Aisha Nguyen's license expires in 8 days.", level: "warning", read: false, createdAt: daysAgo(0) },
-  { id: "n2", title: "Vehicle due for service", body: "Van-07 is approaching its 150k km service interval.", level: "info", read: false, createdAt: daysAgo(0) },
-  { id: "n3", title: "Trip completed", body: "TR-1044 delivered to Charlotte Hub.", level: "success", read: true, createdAt: daysAgo(1) },
-  { id: "n4", title: "Maintenance overdue", body: "Pickup-01 has been in shop for 2 days.", level: "danger", read: false, createdAt: daysAgo(2) },
-  { id: "n5", title: "Expense anomaly", body: "Fuel spend up 12% vs last week.", level: "warning", read: false, createdAt: daysAgo(1) },
+  { id: "n1", titleKey: "notif_license_expiring_title", bodyKey: "notif_license_expiring_body", bodyParams: { name: "Aisha Nguyen", days: 8 }, level: "warning", read: false, createdAt: daysAgo(0), tags: ["license"] },
+  { id: "n2", titleKey: "notif_vehicle_service_title", bodyKey: "notif_vehicle_service_body", bodyParams: { vehicle: "Van-07", odometer: "150k" }, level: "info", read: false, createdAt: daysAgo(0), tags: ["maintenance"] },
+  { id: "n3", titleKey: "notif_trip_completed_title", bodyKey: "notif_trip_completed_body", bodyParams: { code: "TR-1044", destination: "Charlotte Hub" }, level: "success", read: true, createdAt: daysAgo(1), tags: ["trip"] },
+  { id: "n4", titleKey: "notif_maintenance_overdue_title", bodyKey: "notif_maintenance_overdue_body", bodyParams: { vehicle: "Pickup-01", days: 2 }, level: "danger", read: false, createdAt: daysAgo(2), tags: ["maintenance"] },
+  { id: "n5", titleKey: "notif_expense_anomaly_title", bodyKey: "notif_expense_anomaly_body", bodyParams: { pct: 12 }, level: "warning", read: false, createdAt: daysAgo(1), tags: ["expense", "fuel"] },
 ];

@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/ui-bits";
 import { Button } from "@/components/ui/button";
 import { reportsApi, type ReportsAnalytics } from "@/lib/reports-api";
 import { exportReportsCsv, exportReportsPdf } from "@/lib/reports-export";
+import { useTranslation } from "@/lib/i18n";
 import { money } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/reports/")({
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_app/reports/")({
 const PIE_COLORS = ["var(--primary)", "var(--success)", "var(--warning)", "var(--muted-foreground)"];
 
 function ReportsAnalyticsPage() {
+  const { t } = useTranslation();
   const { data, isLoading, error } = useQuery({
     queryKey: ["reports", "analytics"],
     queryFn: () => reportsApi.getAnalytics(),
@@ -33,7 +35,7 @@ function ReportsAnalyticsPage() {
     return (
       <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
-        Loading reports…
+        {t("reports_loading")}
       </div>
     );
   }
@@ -41,7 +43,7 @@ function ReportsAnalyticsPage() {
   if (error || !data) {
     return (
       <div className="brutal-card p-8 text-center text-destructive">
-        {error instanceof Error ? error.message : "Failed to load reports data."}
+        {error instanceof Error ? error.message : t("reports_load_failed")}
       </div>
     );
   }
@@ -49,15 +51,15 @@ function ReportsAnalyticsPage() {
   return (
     <div>
       <PageHeader
-        title="Reports & Analytics"
-        subtitle="Fuel efficiency, fleet utilization, operational cost, and vehicle ROI."
+        title={t("reports_title")}
+        subtitle={t("reports_subtitle")}
         actions={<ExportButtons data={data} />}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
         <SummaryCard
           icon={Fuel}
-          label="Fuel Efficiency"
+          label={t("reports_fuel_efficiency")}
           value={data.summary.fuelEfficiencyKmPerLiter != null ? `${data.summary.fuelEfficiencyKmPerLiter} km/L` : "—"}
           hint={`${data.summary.totalDistanceKm.toLocaleString()} km ÷ ${data.summary.totalFuelLiters.toLocaleString()} L`}
           formula={data.formulas.fuelEfficiency}
@@ -65,7 +67,7 @@ function ReportsAnalyticsPage() {
         />
         <SummaryCard
           icon={Activity}
-          label="Fleet Utilization"
+          label={t("reports_fleet_utilization")}
           value={`${data.summary.fleetUtilizationPct}%`}
           hint={`${data.summary.onTripCount} of ${data.summary.activeFleetCount} active vehicles on trip`}
           formula={data.formulas.fleetUtilization}
@@ -73,24 +75,24 @@ function ReportsAnalyticsPage() {
         />
         <SummaryCard
           icon={DollarSign}
-          label="Operational Cost"
+          label={t("reports_operational_cost")}
           value={money(data.summary.operationalCost)}
-          hint="Fuel + maintenance + tolls & other"
+          hint={t("reports_cost_hint")}
           formula={data.formulas.operationalCost}
           delay={0.08}
         />
         <SummaryCard
           icon={TrendingUp}
-          label="Avg Vehicle ROI"
+          label={t("reports_avg_roi")}
           value={data.summary.avgRoiPct != null ? `${data.summary.avgRoiPct}%` : "—"}
-          hint={`Total revenue ${money(data.summary.totalRevenue)}`}
+          hint={t("reports_revenue_hint", { amount: money(data.summary.totalRevenue) })}
           formula={data.formulas.vehicleRoi}
           delay={0.12}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <ChartCard title="Fuel Efficiency Trend (km/L)" icon={Fuel}>
+        <ChartCard title={t("reports_chart_fuel_trend")} icon={Fuel}>
           <div className="h-64">
             <ResponsiveContainer>
               <LineChart data={data.charts.fuelEfficiencyTrend}>
@@ -99,7 +101,7 @@ function ReportsAnalyticsPage() {
                 <YAxis fontSize={11} />
                 <Tooltip
                   formatter={(v: number, name: string) =>
-                    name === "efficiency" ? [`${v} km/L`, "Efficiency"] : [v, name]
+                    name === "efficiency" ? [`${v} km/L`, t("reports_efficiency")] : [v, name]
                   }
                 />
                 <Line type="monotone" dataKey="efficiency" stroke="var(--warning)" strokeWidth={2.5} dot={{ r: 4 }} />
@@ -108,7 +110,7 @@ function ReportsAnalyticsPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Operational Cost Trend" icon={BarChart3}>
+        <ChartCard title={t("reports_chart_cost_trend")} icon={BarChart3}>
           <div className="h-64">
             <ResponsiveContainer>
               <BarChart data={data.charts.operationalCostTrend}>
@@ -122,7 +124,7 @@ function ReportsAnalyticsPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Cost Breakdown" icon={DollarSign}>
+        <ChartCard title={t("reports_chart_cost_breakdown")} icon={DollarSign}>
           <div className="h-64">
             <ResponsiveContainer>
               <BarChart data={data.charts.costBreakdown} layout="vertical">
@@ -136,7 +138,7 @@ function ReportsAnalyticsPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Fleet Status Distribution" icon={Truck}>
+        <ChartCard title={t("reports_chart_fleet_status")} icon={Truck}>
           <div className="h-64">
             <ResponsiveContainer>
               <PieChart>
@@ -170,7 +172,7 @@ function ReportsAnalyticsPage() {
 
       <div className="brutal-card p-0 overflow-hidden">
         <div className="px-5 py-4 border-b border-border-soft">
-          <h3 className="font-bold">Vehicle ROI</h3>
+          <h3 className="font-bold">{t("reports_vehicle_roi")}</h3>
           <p className="text-xs text-muted-foreground mt-1">
             {data.formulas.vehicleRoi} · {data.formulas.revenueNote}
           </p>
@@ -179,9 +181,9 @@ function ReportsAnalyticsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/60">
               <tr className="text-left">
-                {["Vehicle", "Acquisition", "Revenue", "Fuel", "Maintenance", "Net Return", "ROI %"].map((h) => (
+                {(["vehicle", "reports_col_acquisition", "reports_col_revenue", "nav_fuel", "nav_maintenance", "reports_col_net_return", "reports_col_roi"] as const).map((h) => (
                   <th key={h} className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground whitespace-nowrap">
-                    {h}
+                    {t(h)}
                   </th>
                 ))}
               </tr>
@@ -208,7 +210,7 @@ function ReportsAnalyticsPage() {
               {data.vehicleRoi.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                    No active vehicles to calculate ROI.
+                    {t("reports_no_roi")}
                   </td>
                 </tr>
               )}
@@ -274,27 +276,29 @@ function ChartCard({
 }
 
 function ExportButtons({ data }: { data: ReportsAnalytics }) {
+  const { t } = useTranslation();
+
   const exportCsv = () => {
     exportReportsCsv(data);
-    toast.success("CSV exported");
+    toast.success(t("reports_csv_exported"));
   };
 
   const exportPdf = () => {
     try {
       exportReportsPdf(data);
-      toast.success("PDF exported");
+      toast.success(t("reports_pdf_exported"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to export PDF");
+      toast.error(err instanceof Error ? err.message : t("reports_pdf_failed"));
     }
   };
 
   return (
     <div className="flex gap-2">
       <Button onClick={exportCsv} className="brutal-btn bg-primary text-primary-foreground">
-        <Download className="h-4 w-4 mr-1" /> Export CSV
+        <Download className="h-4 w-4 mr-1" /> {t("export_csv")}
       </Button>
       <Button variant="outline" onClick={exportPdf} className="brutal-btn bg-card">
-        <Download className="h-4 w-4 mr-1" /> Export PDF
+        <Download className="h-4 w-4 mr-1" /> {t("export_pdf")}
       </Button>
     </div>
   );

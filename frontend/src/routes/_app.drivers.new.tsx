@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { driversApi } from "@/lib/drivers-api";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/drivers/new")({
   head: () => ({ meta: [{ title: "Add driver — TransitOps" }] }),
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_app/drivers/new")({
 });
 
 function NewDriver() {
+  const { t } = useTranslation();
   const nav = useNavigate();
   const qc = useQueryClient();
   const [form, setForm] = useState({
@@ -38,34 +40,34 @@ function NewDriver() {
       }),
     onSuccess: (d) => {
       qc.invalidateQueries({ queryKey: ["drivers"] });
-      toast.success(`${d.name} added`);
+      toast.success(t("drivers_added", { name: d.name }));
       nav({ to: "/drivers" });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to add driver"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("drivers_add_failed")),
   });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.licenseNumber) return toast.error("Name and license number required");
+    if (!form.name || !form.licenseNumber) return toast.error(t("drivers_name_required"));
     mutation.mutate();
   };
 
   return (
     <div>
-      <PageHeader title="Add driver" subtitle="Register a new driver." />
+      <PageHeader title={t("drivers_new_title")} subtitle={t("drivers_new_subtitle")} />
       <form onSubmit={submit} className="brutal-card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
-        <F label="Full name"><Input className="brutal-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></F>
-        <F label="License number"><Input className="brutal-input" value={form.licenseNumber} onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })} /></F>
-        <F label="Category">
-          <Input className="brutal-input" value={form.licenseCategory} onChange={(e) => setForm({ ...form, licenseCategory: e.target.value })} placeholder="e.g. Heavy Goods, C, C+E" />
+        <F label={t("drivers_full_name")}><Input className="brutal-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></F>
+        <F label={t("drivers_license_number")}><Input className="brutal-input" value={form.licenseNumber} onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })} /></F>
+        <F label={t("category")}>
+          <Input className="brutal-input" value={form.licenseCategory} onChange={(e) => setForm({ ...form, licenseCategory: e.target.value })} placeholder={t("drivers_category_placeholder")} />
         </F>
-        <F label="License expiry"><Input type="date" className="brutal-input" value={form.licenseExpiry} onChange={(e) => setForm({ ...form, licenseExpiry: e.target.value ? new Date(e.target.value).toISOString() : "" })} /></F>
-        <F label="Phone"><Input className="brutal-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></F>
-        <F label="Safety score (0-100)"><Input type="number" className="brutal-input" value={form.safetyScore} onChange={(e) => setForm({ ...form, safetyScore: +e.target.value })} /></F>
+        <F label={t("drivers_license_expiry_label")}><Input type="date" className="brutal-input" value={form.licenseExpiry} onChange={(e) => setForm({ ...form, licenseExpiry: e.target.value ? new Date(e.target.value).toISOString() : "" })} /></F>
+        <F label={t("drivers_phone")}><Input className="brutal-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></F>
+        <F label={t("drivers_safety_score_label")}><Input type="number" className="brutal-input" value={form.safetyScore} onChange={(e) => setForm({ ...form, safetyScore: +e.target.value })} /></F>
         <div className="md:col-span-2 flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={() => nav({ to: "/drivers" })} className="brutal-btn bg-card">Cancel</Button>
+          <Button type="button" variant="outline" onClick={() => nav({ to: "/drivers" })} className="brutal-btn bg-card">{t("cancel")}</Button>
           <Button type="submit" className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90" disabled={mutation.isPending}>
-            {mutation.isPending ? "Saving…" : "Save driver"}
+            {mutation.isPending ? t("saving") : t("drivers_save")}
           </Button>
         </div>
       </form>

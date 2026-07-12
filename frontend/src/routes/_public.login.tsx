@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Truck, ArrowRight } from "lucide-react";
 import { useAuth, type Role } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,10 +30,11 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const setAuth = useAuth((s) => s.setAuth);
   const nav = useNavigate();
+  const { t } = useTranslation();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return toast.error("Enter email and password");
+    if (!email || !password) return toast.error(t("enter_email_password"));
 
     setLoading(true);
     try {
@@ -46,10 +49,10 @@ function LoginPage() {
         res.data.token,
       );
 
-      toast.success(`Welcome back, ${res.data.user.name}!`);
+      toast.success(t("welcome_back", { name: res.data.user.name }));
       nav({ to: "/dashboard" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed");
+      toast.error(err instanceof Error ? err.message : t("login_failed"));
     } finally {
       setLoading(false);
     }
@@ -58,24 +61,27 @@ function LoginPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* Left: form */}
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8 relative">
+        <div className="absolute top-6 right-6">
+          <LanguageSwitcher />
+        </div>
         <div className="w-full max-w-md">
           <div className="flex items-center gap-2 mb-8">
             <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground grid place-items-center brutal-border brutal-shadow-sm">
               <Truck className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-lg font-extrabold tracking-tight">TransitOps</div>
-              <div className="text-xs text-muted-foreground">Smart Transport Operations Platform</div>
+              <div className="text-lg font-extrabold tracking-tight">{t("brandName")}</div>
+              <div className="text-xs text-muted-foreground">{t("brandTaglineLong")}</div>
             </div>
           </div>
 
-          <h1 className="text-3xl font-extrabold tracking-tight">Sign in to your dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-2">Enter your credentials to access the operations console.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t("login_title")}</h1>
+          <p className="text-sm text-muted-foreground mt-2">{t("login_subtitle")}</p>
 
           <form onSubmit={submit} className="mt-8 space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -88,8 +94,8 @@ function LoginPage() {
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
+                <Label htmlFor="password">{t("password")}</Label>
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">{t("forgot_password")}</Link>
               </div>
               <Input
                 id="password"
@@ -107,21 +113,21 @@ function LoginPage() {
               className="w-full h-11 brutal-btn bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={loading}
             >
-              {loading ? "Signing in…" : <span className="flex items-center justify-center gap-1">Sign in <ArrowRight className="h-4 w-4" /></span>}
+              {loading ? t("signing_in") : <span className="flex items-center justify-center gap-1">{t("sign_in")} <ArrowRight className="h-4 w-4" /></span>}
             </Button>
           </form>
 
           {/* Demo credentials hint */}
           <div className="mt-6 rounded-xl border-2 border-dashed border-muted p-4 text-xs text-muted-foreground space-y-1.5">
-            <p className="font-semibold text-foreground mb-1">Click any role to quick-fill credentials (password: <span className="font-mono">Password123!</span>)</p>
+            <p className="font-semibold text-foreground mb-1">{t("demo_hint")} <span className="font-mono">Password123!</span>)</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {[
-                { label: "Fleet Manager", email: "amina@transitops.com" },
-                { label: "Dispatcher", email: "jonas@transitops.com" },
-                { label: "Safety Officer", email: "tariq@transitops.com" },
-                { label: "Financial Analyst", email: "leah@transitops.com" },
-                { label: "Truck Driver (Samuel)", email: "samuel@transitops.com" },
-                { label: "Truck Driver (Grace)", email: "grace@transitops.com" },
+                { labelKey: "role_fleet_manager" as const, email: "amina@transitops.com" },
+                { labelKey: "role_dispatcher" as const, email: "jonas@transitops.com" },
+                { labelKey: "role_safety_officer" as const, email: "tariq@transitops.com" },
+                { labelKey: "role_financial_analyst" as const, email: "leah@transitops.com" },
+                { labelKey: "role_driver" as const, email: "samuel@transitops.com", suffix: " (Samuel)" },
+                { labelKey: "role_driver" as const, email: "grace@transitops.com", suffix: " (Grace)" },
               ].map((item) => (
                 <button
                   key={item.email}
@@ -132,7 +138,7 @@ function LoginPage() {
                   }}
                   className="text-left px-2 py-1 rounded bg-muted/40 hover:bg-muted border border-border-soft flex items-center justify-between group transition-colors"
                 >
-                  <span className="font-medium text-foreground">{item.label}</span>
+                  <span className="font-medium text-foreground">{t(item.labelKey)}{"suffix" in item ? item.suffix : ""}</span>
                   <span className="font-mono text-[10px] text-muted-foreground group-hover:text-primary">{item.email}</span>
                 </button>
               ))}
@@ -147,12 +153,12 @@ function LoginPage() {
           style={{ backgroundImage: "radial-gradient(circle at 20% 30%, white 0, transparent 40%), radial-gradient(circle at 80% 70%, white 0, transparent 40%)" }} />
         <div className="relative max-w-md text-primary-foreground">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-xs font-semibold">
-            <Truck className="h-3.5 w-3.5" /> Fleet ops, reimagined
+            <Truck className="h-3.5 w-3.5" /> {t("hero_badge")}
           </div>
-          <h2 className="mt-6 text-4xl font-extrabold tracking-tight leading-tight">Run your entire transport operation from one console.</h2>
+          <h2 className="mt-6 text-4xl font-extrabold tracking-tight leading-tight">{t("hero_title")}</h2>
           <p className="mt-4 text-primary-foreground/90">
-            Real-time fleet utilization, dispatch workflows, maintenance tracking, fuel + expense analytics, and an AI copilot that answers the questions your team actually asks.
-          </p>  
+            {t("hero_subtitle")}
+          </p>
         </div>
       </div>
     </div>

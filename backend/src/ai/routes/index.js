@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { analyzeIncident } from '../services/geminiService.js';
+import { translateContent } from '../services/translateService.js';
 
 const router = Router();
 
@@ -48,6 +49,34 @@ router.post('/analyze-incident', async (req, res) => {
   }
 
   return res.status(200).json({ success: true, data: result.data });
+});
+
+router.post('/translate', async (req, res) => {
+  const { content, targetLanguage } = req.body;
+
+  if (!content || !targetLanguage) {
+    return res.status(400).json({
+      success: false,
+      error: 'MISSING_FIELD',
+      message: 'Request body must include "content" and "targetLanguage".',
+    });
+  }
+
+  const result = await translateContent(content, targetLanguage);
+
+  if (!result.success) {
+    const statusMap = {
+      INVALID_API_KEY: 500,
+      AI_SERVICE_ERROR: 502,
+      AI_EMPTY_RESPONSE: 502,
+      AI_RESPONSE_INVALID: 422,
+      MISSING_INPUT: 400,
+    };
+    const status = statusMap[result.error] ?? 500;
+    return res.status(status).json({ success: false, error: result.error });
+  }
+
+  return res.status(200).json({ success: true, translated: result.data });
 });
 
 export default router;

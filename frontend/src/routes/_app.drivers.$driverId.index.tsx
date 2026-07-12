@@ -4,10 +4,10 @@ import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { useTransitStore } from "@/lib/store";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { daysUntil, shortDate } from "@/lib/format";
 import { driversApi } from "@/lib/drivers-api";
 import { AlertTriangle, Pencil, ArrowLeft, IdCard } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/drivers/$driverId/")({
   head: () => ({ meta: [{ title: "Driver — TransitOps" }] }),
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/_app/drivers/$driverId/")({
 });
 
 function DriverDetail() {
+  const { t } = useTranslation();
   const { driverId } = useParams({ from: "/_app/drivers/$driverId/" });
   const trips = useTransitStore((s) => s.trips);
   const vehicles = useTransitStore((s) => s.vehicles);
@@ -24,10 +25,10 @@ function DriverDetail() {
     queryFn: () => driversApi.getOne(driverId),
   });
 
-  if (isLoading) return <div className="text-sm text-muted-foreground">Loading driver…</div>;
-  if (isError || !d) return <EmptyState title="Driver not found" />;
+  if (isLoading) return <div className="text-sm text-muted-foreground">{t("drivers_loading_one")}</div>;
+  if (isError || !d) return <EmptyState title={t("drivers_not_found")} />;
 
-  const driverTrips = trips.filter((t) => t.driverId === d.id);
+  const driverTrips = trips.filter((trip) => trip.driverId === d.id);
   const days = daysUntil(d.licenseExpiry);
   const expired = days < 0;
 
@@ -35,50 +36,50 @@ function DriverDetail() {
     <div>
       <PageHeader
         title={d.name}
-        subtitle={`License ${d.licenseNumber} · Category ${d.category}`}
+        subtitle={t("drivers_license_info", { number: d.licenseNumber, category: d.category })}
         actions={
           <div className="flex gap-2">
-            <Link to="/drivers" className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><ArrowLeft className="h-4 w-4" /> Back</Link>
-            <Link to="/drivers/$driverId/licenses" params={{ driverId: d.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><IdCard className="h-4 w-4" /> Licenses</Link>
-            <Link to="/drivers/$driverId/edit" params={{ driverId: d.id }} className="brutal-btn px-3 py-2 bg-primary text-primary-foreground inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
+            <Link to="/drivers" className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><ArrowLeft className="h-4 w-4" /> {t("back")}</Link>
+            <Link to="/drivers/$driverId/licenses" params={{ driverId: d.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><IdCard className="h-4 w-4" /> {t("drivers_licenses_btn")}</Link>
+            <Link to="/drivers/$driverId/edit" params={{ driverId: d.id }} className="brutal-btn px-3 py-2 bg-primary text-primary-foreground inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> {t("edit")}</Link>
           </div>
         }
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div className="brutal-card p-5">
-          <h3 className="font-bold mb-3">Profile</h3>
+          <h3 className="font-bold mb-3">{t("drivers_profile")}</h3>
           <dl className="space-y-2 text-sm">
-            <Row label="Status"><StatusBadge status={d.status} /></Row>
-            <Row label="Phone">{d.phone}</Row>
-            <Row label="License expiry" tone={expired ? "danger" : days < 15 ? "warning" : "default"}>
+            <Row label={t("status")}><StatusBadge status={d.status} /></Row>
+            <Row label={t("drivers_phone")}>{d.phone}</Row>
+            <Row label={t("drivers_license_expiry")} tone={expired ? "danger" : days < 15 ? "warning" : "default"}>
               {(expired || days < 15) && <AlertTriangle className="h-3 w-3 inline mr-1" />}{shortDate(d.licenseExpiry)}
             </Row>
           </dl>
         </div>
         <div className="brutal-card p-5 lg:col-span-2">
-          <h3 className="font-bold mb-3">Safety score</h3>
-          <div className="text-5xl font-black">{d.safetyScore}<span className="text-lg text-muted-foreground">/100</span></div>
+          <h3 className="font-bold mb-3">{t("drivers_safety_score")}</h3>
+          <div className="text-5xl font-black">{d.safetyScore}<span className="text-lg text-muted-foreground">{t("drivers_score_of")}</span></div>
           <Progress value={d.safetyScore} className="mt-3 h-3" />
-          <p className="text-xs text-muted-foreground mt-3">Composite score of speeding events, harsh braking, idle time and completed safety trainings over the past 90 days.</p>
+          <p className="text-xs text-muted-foreground mt-3">{t("drivers_score_desc")}</p>
         </div>
       </div>
 
       <div className="brutal-card p-5">
-        <h3 className="font-bold mb-3">Trip history</h3>
-        {driverTrips.length === 0 ? <div className="text-sm text-muted-foreground">No trips assigned.</div> : (
+        <h3 className="font-bold mb-3">{t("drivers_trip_history")}</h3>
+        {driverTrips.length === 0 ? <div className="text-sm text-muted-foreground">{t("drivers_no_trips")}</div> : (
           <ul className="space-y-2 text-sm">
-            {driverTrips.map((t) => {
-              const v = vehicles.find((x) => x.id === t.vehicleId);
+            {driverTrips.map((trip) => {
+              const v = vehicles.find((x) => x.id === trip.vehicleId);
               return (
-                <li key={t.id} className="flex items-center justify-between border-b border-border-soft last:border-0 pb-2">
+                <li key={trip.id} className="flex items-center justify-between border-b border-border-soft last:border-0 pb-2">
                   <div>
-                    <Link to="/trips/$tripId" params={{ tripId: t.id }} className="font-semibold hover:text-primary">{t.code}</Link>
-                    <span className="text-muted-foreground ml-2">{t.source} → {t.destination}</span>
+                    <Link to="/trips/$tripId" params={{ tripId: trip.id }} className="font-semibold hover:text-primary">{trip.code}</Link>
+                    <span className="text-muted-foreground ml-2">{trip.source} → {trip.destination}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground">{v?.name}</span>
-                    <StatusBadge status={t.status} />
+                    <StatusBadge status={trip.status} />
                   </div>
                 </li>
               );

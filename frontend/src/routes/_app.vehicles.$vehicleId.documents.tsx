@@ -2,6 +2,7 @@ import { createFileRoute, useParams } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-bits";
 import { useTransitStore } from "@/lib/store";
 import { FileText } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/vehicles/$vehicleId/documents")({
   head: () => ({ meta: [{ title: "Vehicle documents — TransitOps" }] }),
@@ -15,11 +16,15 @@ const mockDocs = [
 ];
 
 function VehicleDocsPage() {
+  const { t } = useTranslation();
   const { vehicleId } = useParams({ from: "/_app/vehicles/$vehicleId/documents" });
   const v = useTransitStore((s) => s.vehicles.find((x) => x.id === vehicleId));
   return (
     <div>
-      <PageHeader title={`${v?.name ?? "Vehicle"} — Documents`} subtitle="Registration, insurance, inspections and more." />
+      <PageHeader
+        title={t("vehicles_docs_title", { name: v?.name ?? t("vehicle") })}
+        subtitle={t("vehicles_docs_subtitle")}
+      />
       <div className="brutal-card p-0 overflow-hidden">
         <ul className="divide-y divide-border-soft">
           {mockDocs.map((d) => (
@@ -27,9 +32,9 @@ function VehicleDocsPage() {
               <div className="h-9 w-9 grid place-items-center rounded-lg bg-primary/10 text-primary brutal-border"><FileText className="h-4 w-4" /></div>
               <div className="flex-1">
                 <div className="font-semibold text-sm">{d.name}</div>
-                <div className="text-xs text-muted-foreground">{d.size} · Added {d.added}</div>
+                <div className="text-xs text-muted-foreground">{d.size} · {t("vehicles_docs_added", { time: d.added })}</div>
               </div>
-              <button className="brutal-btn px-3 py-1.5 text-xs bg-card">Download</button>
+              <button className="brutal-btn px-3 py-1.5 text-xs bg-card">{t("download")}</button>
             </li>
           ))}
         </ul>

@@ -5,6 +5,7 @@ import {
   type Vehicle, type Driver, type Trip, type MaintenanceLog, type FuelLog, type Expense, type Notification,
 } from "./mock-data";
 import { api } from "./api";
+import { notificationMatchesRole } from "./i18n/helpers";
 
 type State = {
   vehicles: Vehicle[];
@@ -250,24 +251,9 @@ export const useTransitStore = create<State & Actions>()(
               const currentNotifications = s.notifications;
 
               // Filter static seed notifications by role
-              const filteredSeeds = seedNotifications.filter((n) => {
-                const titleLower = n.title.toLowerCase();
-                const bodyLower = n.body.toLowerCase();
-                if (user.role === "driver") {
-                  return titleLower.includes("trip") || bodyLower.includes("trip");
-                }
-                if (user.role === "financial_analyst") {
-                  return titleLower.includes("expense") || titleLower.includes("fuel") || bodyLower.includes("expense") || bodyLower.includes("fuel");
-                }
-                if (user.role === "safety_officer") {
-                  return titleLower.includes("license") || titleLower.includes("maintenance") || bodyLower.includes("license") || bodyLower.includes("maintenance");
-                }
-                if (user.role === "dispatcher") {
-                  return titleLower.includes("trip") || titleLower.includes("license") || bodyLower.includes("trip") || bodyLower.includes("license");
-                }
-                // fleet_manager sees all
-                return true;
-              });
+              const filteredSeeds = seedNotifications.filter((n) =>
+                notificationMatchesRole(n.tags, user.role),
+              );
 
               // Generate dynamic incident notifications from backend response
               const dynamicList: Notification[] = [];
@@ -280,29 +266,35 @@ export const useTransitStore = create<State & Actions>()(
                     if (inc.status === "APPROVED") {
                       dynamicList.push({
                         id: `inc-app-${inc._id}`,
-                        title: "Incident Approved",
-                        body: `Your issue report for ${vehicleName} was approved. Scheduled for maintenance.`,
+                        titleKey: "notif_incident_approved_title",
+                        bodyKey: "notif_incident_approved_body",
+                        bodyParams: { vehicle: vehicleName },
                         level: "success",
                         read: false,
                         createdAt: inc.updatedAt || inc.createdAt,
+                        tags: ["incident"],
                       });
                     } else if (inc.status === "REJECTED") {
                       dynamicList.push({
                         id: `inc-rej-${inc._id}`,
-                        title: "Incident Rejected",
-                        body: `Your issue report for ${vehicleName} was rejected.`,
+                        titleKey: "notif_incident_rejected_title",
+                        bodyKey: "notif_incident_rejected_body",
+                        bodyParams: { vehicle: vehicleName },
                         level: "warning",
                         read: false,
                         createdAt: inc.updatedAt || inc.createdAt,
+                        tags: ["incident"],
                       });
                     } else if (inc.status === "PENDING") {
                       dynamicList.push({
                         id: `inc-pen-${inc._id}`,
-                        title: "Incident Reported",
-                        body: `Your report for ${vehicleName} is pending review.`,
+                        titleKey: "notif_incident_reported_title",
+                        bodyKey: "notif_incident_reported_body",
+                        bodyParams: { vehicle: vehicleName },
                         level: "info",
                         read: true,
                         createdAt: inc.createdAt,
+                        tags: ["incident"],
                       });
                     }
                   }
@@ -311,11 +303,13 @@ export const useTransitStore = create<State & Actions>()(
                     if (inc.status === "PENDING") {
                       dynamicList.push({
                         id: `inc-pending-${inc._id}`,
-                        title: "Pending Incident Review",
-                        body: `Driver ${driverName} reported an incident on ${vehicleName} requiring review.`,
+                        titleKey: "notif_incident_pending_review_title",
+                        bodyKey: "notif_incident_pending_review_body",
+                        bodyParams: { driver: driverName, vehicle: vehicleName },
                         level: "danger",
                         read: false,
                         createdAt: inc.createdAt,
+                        tags: ["incident"],
                       });
                     }
                   }

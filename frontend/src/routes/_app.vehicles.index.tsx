@@ -11,6 +11,7 @@ import { useTransitStore, useAuth } from "@/lib/store";
 import { money, km, kg } from "@/lib/format";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/vehicles/")({
   head: () => ({ meta: [{ title: "Vehicles — TransitOps" }] }),
@@ -19,18 +20,25 @@ export const Route = createFileRoute("/_app/vehicles/")({
 
 type StatusFilter = VehicleStatus | "all";
 
-const statuses: { key: StatusFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "AVAILABLE", label: "Available" },
-  { key: "ON_TRIP", label: "On Trip" },
-  { key: "IN_SHOP", label: "In Shop" },
-  { key: "RETIRED", label: "Retired" },
-];
-
 function VehiclesPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
+
+  const statuses = useMemo(
+    () =>
+      (
+        [
+          ["all", "all"],
+          ["AVAILABLE", "status_available"],
+          ["ON_TRIP", "status_on_trip"],
+          ["IN_SHOP", "status_in_shop"],
+          ["RETIRED", "status_retired"],
+        ] as const
+      ).map(([key, labelKey]) => ({ key: key as StatusFilter, label: t(labelKey) })),
+    [t],
+  );
 
   const { data: vehicles = [], isLoading, isError } = useQuery({
     queryKey: ["vehicles"],
@@ -43,7 +51,7 @@ function VehiclesPage() {
       qc.invalidateQueries({ queryKey: ["vehicles"] });
       useTransitStore.getState().syncWithBackend();
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to delete vehicle"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("vehicles_delete_failed")),
   });
 
   const user = useAuth((s) => s.user);
@@ -58,20 +66,20 @@ function VehiclesPage() {
   }, [vehicles, q, filter]);
 
   const handleDelete = (id: string, name: string) => {
-    if (!window.confirm(`Remove ${name} from the fleet?`)) return;
-    deleteMutation.mutate(id, { onSuccess: () => toast.success(`${name} removed`) });
+    if (!window.confirm(t("vehicles_remove_confirm", { name }))) return;
+    deleteMutation.mutate(id, { onSuccess: () => toast.success(t("vehicles_removed", { name })) });
   };
 
   return (
     <div>
       <PageHeader
-        title="Vehicle registry"
-        subtitle={`${vehicles.length} vehicles in your fleet`}
+        title={t("vehicles_title")}
+        subtitle={t("vehicles_subtitle", { count: vehicles.length })}
         actions={
           canEdit ? (
             <Link to="/vehicles/new">
               <Button className="brutal-btn bg-primary text-primary-foreground hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-1" /> Add vehicle
+                <Plus className="h-4 w-4 mr-1" /> {t("vehicles_add")}
               </Button>
             </Link>
           ) : undefined
@@ -82,7 +90,7 @@ function VehiclesPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search registration, model, name…" className="pl-9 brutal-input" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("vehicles_search")} className="pl-9 brutal-input" />
           </div>
           <div className="flex gap-1.5 flex-wrap">
             {statuses.map(({ key, label }) => (
@@ -102,10 +110,10 @@ function VehiclesPage() {
         </div>
       </div>
 
-      {isLoading && <div className="text-sm text-muted-foreground mb-4">Loading vehicles…</div>}
+      {isLoading && <div className="text-sm text-muted-foreground mb-4">{t("vehicles_loading")}</div>}
       {isError && (
         <div className="text-sm text-destructive mb-4">
-          Failed to load vehicles. Make sure you are signed in and the backend is running.
+          {t("vehicles_load_failed")}
         </div>
       )}
 
@@ -114,8 +122,8 @@ function VehiclesPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/60 sticky top-0">
               <tr className="text-left">
-                <Th>Reg #</Th><Th>Vehicle</Th><Th>Model</Th><Th>Type</Th>
-                <Th>Capacity</Th><Th>Odometer</Th><Th>Cost</Th><Th>Status</Th><Th className="text-right">Actions</Th>
+                <Th>{t("vehicles_col_reg")}</Th><Th>{t("vehicles_col_vehicle")}</Th><Th>{t("model")}</Th><Th>{t("type")}</Th>
+                <Th>{t("vehicles_col_capacity")}</Th><Th>{t("vehicles_col_odometer")}</Th><Th>{t("vehicles_col_cost")}</Th><Th>{t("status")}</Th><Th className="text-right">{t("actions")}</Th>
               </tr>
             </thead>
             <tbody>
@@ -150,7 +158,7 @@ function VehiclesPage() {
                 </tr>
               ))}
               {!isLoading && rows.length === 0 && (
-                <tr><td colSpan={9} className="text-center text-muted-foreground py-10">No vehicles match your filters.</td></tr>
+                <tr><td colSpan={9} className="text-center text-muted-foreground py-10">{t("vehicles_empty")}</td></tr>
               )}
             </tbody>
           </table>

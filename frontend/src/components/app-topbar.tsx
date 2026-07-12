@@ -1,7 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, LogOut, Moon, Search, Sun, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuth, useTransitStore, useUI, roleLabel } from "@/lib/store";
+import { useAuth, useTransitStore, useUI } from "@/lib/store";
+import { useTranslation, type I18nKey, resolveNotification, isIncidentNotification } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -11,12 +13,13 @@ export function AppTopbar() {
   const { user, logout } = useAuth();
   const nav = useNavigate();
   const { theme, setTheme } = useUI();
+  const { t } = useTranslation();
   const notifications = useTransitStore((s) => s.notifications);
   const markAll = useTransitStore((s) => s.markAllNotificationsRead);
   const markNotificationRead = useTransitStore((s) => s.markNotificationRead);
   const pendingIncidentsCount = useTransitStore((s) => s.pendingIncidents.length);
   const unread = notifications.filter((n) => !n.read).length;
-  const unreadIncidentNotifications = notifications.filter((n) => !n.read && (n.id.startsWith("inc-") || n.title.toLowerCase().includes("incident")));
+  const unreadIncidentNotifications = notifications.filter((n) => !n.read && isIncidentNotification(n));
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -28,6 +31,8 @@ export function AppTopbar() {
     nav({ to: "/login" });
   };
 
+  const roleKey: I18nKey | null = user?.role ? (`role_${user.role}` as I18nKey) : null;
+
   return (
     <header className="sticky top-0 z-30 h-16 bg-card/80 backdrop-blur border-b border-border-soft flex items-center gap-4 px-6">
       <div className="relative flex-1 max-w-md">
@@ -35,10 +40,12 @@ export function AppTopbar() {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search vehicles, drivers, trips…"
+          placeholder={t("search_placeholder")}
           className="pl-9 h-10 brutal-input"
         />
       </div>
+
+      <LanguageSwitcher compact />
 
       <button
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -62,12 +69,14 @@ export function AppTopbar() {
         <SheetContent className="w-[380px]">
           <SheetHeader>
             <SheetTitle className="flex items-center justify-between">
-              <span>Notifications</span>
-              <button onClick={markAll} className="text-xs font-medium text-primary hover:underline">Mark all read</button>
+              <span>{t("notifications_title")}</span>
+              <button onClick={markAll} className="text-xs font-medium text-primary hover:underline">{t("mark_all_read")}</button>
             </SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-2 overflow-y-auto pr-1">
-            {notifications.map((n) => (
+            {notifications.map((n) => {
+              const { title, body } = resolveNotification(n, t);
+              return (
               <button
                 key={n.id}
                 onClick={() => markNotificationRead(n.id)}
@@ -84,11 +93,12 @@ export function AppTopbar() {
                     n.level === "success" && "bg-success",
                     n.level === "info" && "bg-primary",
                   )} />
-                  <div className="text-sm font-semibold">{n.title}</div>
+                  <div className="text-sm font-semibold">{title}</div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{n.body}</p>
+                <p className="text-xs text-muted-foreground mt-1">{body}</p>
               </button>
-            ))}
+              );
+            })}
             {user?.role === "fleet_manager" && unreadIncidentNotifications.length > 0 && (
               <div onClick={() => {
                 unreadIncidentNotifications.forEach((n) => markNotificationRead(n.id));
@@ -96,9 +106,9 @@ export function AppTopbar() {
               }} className="rounded-xl border-2 border-border bg-danger/10 brutal-shadow-sm p-3 cursor-pointer transition-colors hover:bg-danger/20">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
-                  <div className="text-sm font-semibold text-danger">Pending Incident Reports</div>
+                  <div className="text-sm font-semibold text-danger">{t("pending_incidents_title")}</div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">You have {pendingIncidentsCount} new AI incident reports pending review.</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("pending_incidents_body", { count: pendingIncidentsCount })}</p>
               </div>
             )}
           </div>
@@ -113,7 +123,7 @@ export function AppTopbar() {
             </div>
             <div className="hidden md:block text-left">
               <div className="text-sm font-semibold leading-tight">{user?.name}</div>
-              <div className="text-[11px] text-muted-foreground leading-tight">{user ? roleLabel[user.role] : ""}</div>
+              <div className="text-[11px] text-muted-foreground leading-tight">{roleKey ? t(roleKey) : ""}</div>
             </div>
           </button>
         </DropdownMenuTrigger>
@@ -121,14 +131,14 @@ export function AppTopbar() {
           <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => nav({ to: "/settings/profile" })}>
-            <UserIcon className="h-4 w-4 mr-2" /> Profile
+            <UserIcon className="h-4 w-4 mr-2" /> {t("profile")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => nav({ to: "/settings" })}>
-            <UserIcon className="h-4 w-4 mr-2" /> Settings
+            <UserIcon className="h-4 w-4 mr-2" /> {t("settings")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Sign out
+            <LogOut className="h-4 w-4 mr-2" /> {t("sign_out")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -17,6 +17,22 @@ src/ai/
 ## How to use
 Add your `GEMINI_API_KEY` to the `.env` file in the backend root.
 
+Get a **free** API key at https://aistudio.google.com/apikey
+
+### Endpoints
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/ai/analyze-incident` | AI incident analysis |
+| POST | `/api/ai/translate` | Multilingual UI translation via Gemini |
+
+### Translate request body
+```json
+{
+  "content": { "nav_dashboard": "Dashboard", "sign_in": "Sign in" },
+  "targetLanguage": "Spanish"
+}
+```
+
 Run the test suite:
 ```bash
 node src/ai/test/testGemini.js

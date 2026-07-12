@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { driversApi, type DriverStatus } from "@/lib/drivers-api";
 import { toast } from "sonner";
+import { useTranslation, statusKey } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/drivers/$driverId/edit")({
   head: () => ({ meta: [{ title: "Edit driver — TransitOps" }] }),
@@ -23,9 +24,19 @@ type FormState = {
 };
 
 function EditDriver() {
+  const { t } = useTranslation();
   const { driverId } = useParams({ from: "/_app/drivers/$driverId/edit" });
   const nav = useNavigate();
   const qc = useQueryClient();
+
+  const statusOptions = useMemo(
+    () =>
+      (["AVAILABLE", "ON_TRIP", "OFF_DUTY", "SUSPENDED"] as const).map((value) => ({
+        value,
+        label: t(statusKey(value) ?? "status_available"),
+      })),
+    [t],
+  );
 
   const { data: driver, isLoading, isError } = useQuery({
     queryKey: ["drivers", driverId],
@@ -52,39 +63,38 @@ function EditDriver() {
     onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: ["drivers"] });
       qc.setQueryData(["drivers", driverId], updated);
-      toast.success("Driver updated");
+      toast.success(t("drivers_updated"));
       nav({ to: "/drivers/$driverId", params: { driverId } });
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Update failed"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("drivers_update_failed")),
   });
 
-  if (isLoading) return <div className="text-sm text-muted-foreground">Loading driver…</div>;
-  if (isError || !driver || !form) return <EmptyState title="Driver not found" />;
+  if (isLoading) return <div className="text-sm text-muted-foreground">{t("drivers_loading_one")}</div>;
+  if (isError || !driver || !form) return <EmptyState title={t("drivers_not_found")} />;
 
   return (
     <div>
-      <PageHeader title={`Edit ${driver.name}`} />
+      <PageHeader title={t("drivers_edit_title", { name: driver.name })} />
       <form
         onSubmit={(e) => { e.preventDefault(); mutation.mutate(form); }}
         className="brutal-card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl"
       >
-        <F label="Name"><Input className="brutal-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></F>
-        <F label="License #"><Input className="brutal-input" value={form.licenseNumber} onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })} /></F>
-        <F label="Category"><Input className="brutal-input" value={form.licenseCategory} onChange={(e) => setForm({ ...form, licenseCategory: e.target.value })} /></F>
-        <F label="Phone"><Input className="brutal-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></F>
-        <F label="Safety score"><Input type="number" className="brutal-input" value={form.safetyScore} onChange={(e) => setForm({ ...form, safetyScore: +e.target.value })} /></F>
-        <F label="Status">
+        <F label={t("drivers_full_name")}><Input className="brutal-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></F>
+        <F label={t("drivers_license_hash")}><Input className="brutal-input" value={form.licenseNumber} onChange={(e) => setForm({ ...form, licenseNumber: e.target.value })} /></F>
+        <F label={t("category")}><Input className="brutal-input" value={form.licenseCategory} onChange={(e) => setForm({ ...form, licenseCategory: e.target.value })} /></F>
+        <F label={t("drivers_phone")}><Input className="brutal-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></F>
+        <F label={t("drivers_safety_score_label")}><Input type="number" className="brutal-input" value={form.safetyScore} onChange={(e) => setForm({ ...form, safetyScore: +e.target.value })} /></F>
+        <F label={t("status")}>
           <select className="brutal-input w-full" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as DriverStatus })}>
-            <option value="AVAILABLE">Available</option>
-            <option value="ON_TRIP">On Trip</option>
-            <option value="OFF_DUTY">Off Duty</option>
-            <option value="SUSPENDED">Suspended</option>
+            {statusOptions.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
         </F>
         <div className="md:col-span-2 flex gap-2 justify-end">
-          <Button type="button" variant="outline" className="brutal-btn bg-card" onClick={() => nav({ to: "/drivers/$driverId", params: { driverId } })}>Cancel</Button>
+          <Button type="button" variant="outline" className="brutal-btn bg-card" onClick={() => nav({ to: "/drivers/$driverId", params: { driverId } })}>{t("cancel")}</Button>
           <Button type="submit" className="brutal-btn bg-primary text-primary-foreground" disabled={mutation.isPending}>
-            {mutation.isPending ? "Saving…" : "Save"}
+            {mutation.isPending ? t("saving") : t("save")}
           </Button>
         </div>
       </form>

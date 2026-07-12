@@ -11,6 +11,7 @@ import {
   LineChart, Line, CartesianGrid,
 } from "recharts";
 import { useAuth, type AuthUser } from "@/lib/store";
+import { useTranslation, statusKey, type I18nKey, EN_TEXTS } from "@/lib/i18n";
 import { driversApi, type DriverStatus } from "@/lib/drivers-api";
 import {
   dashboardApi,
@@ -25,10 +26,10 @@ import {
 import { daysUntil } from "@/lib/format";
 import { toast } from "sonner";
 
-const DRIVER_STATUS_OPTIONS: { value: DriverStatus; label: string }[] = [
-  { value: "AVAILABLE", label: "Available" },
-  { value: "ON_TRIP", label: "On Trip" },
-  { value: "OFF_DUTY", label: "Off Duty" },
+const DRIVER_STATUS_OPTIONS: { value: DriverStatus; labelKey: "status_available" | "status_on_trip" | "status_off_duty" }[] = [
+  { value: "AVAILABLE", labelKey: "status_available" },
+  { value: "ON_TRIP", labelKey: "status_on_trip" },
+  { value: "OFF_DUTY", labelKey: "status_off_duty" },
 ];
 
 const INSIGHT_ICONS: Record<string, string> = {
@@ -37,12 +38,61 @@ const INSIGHT_ICONS: Record<string, string> = {
   danger: "👤",
 };
 
-const VEHICLE_STATUS_LABELS: Record<string, string> = {
-  AVAILABLE: "Available",
-  ON_TRIP: "On Trip",
-  IN_SHOP: "In Shop",
-  RETIRED: "Retired",
+const TRIP_STATUS_CHART: Record<string, I18nKey> = {
+  Draft: "status_draft",
+  Dispatched: "status_dispatched",
+  Completed: "status_completed",
+  Cancelled: "status_cancelled",
 };
+
+const MAINTENANCE_CHART: Record<string, I18nKey> = {
+  Open: "status_open",
+  Closed: "status_closed",
+};
+
+const VEHICLE_STATUS_LABELS: Record<string, "status_available" | "status_on_trip" | "status_in_shop" | "status_retired"> = {
+  AVAILABLE: "status_available",
+  ON_TRIP: "status_on_trip",
+  IN_SHOP: "status_in_shop",
+  RETIRED: "status_retired",
+};
+
+function mapChartLabels<T extends { name: string }>(
+  rows: T[],
+  keyMap: Record<string, I18nKey>,
+  t: (key: I18nKey) => string,
+) {
+  return rows.map((row) => ({
+    ...row,
+    name: keyMap[row.name] ? t(keyMap[row.name]) : row.name,
+  }));
+}
+
+function buildInsights(
+  data: OperationsDashboard,
+  t: (key: I18nKey, vars?: Record<string, string | number>) => string,
+) {
+  const insights: { tone: string; text: string }[] = [];
+  if (data.kpis.vehiclesInMaintenance > 0) {
+    insights.push({
+      tone: "primary",
+      text: t("dash_insight_vehicles_in_shop", { count: data.kpis.vehiclesInMaintenance }),
+    });
+  }
+  if (data.kpis.completedTrips > 0) {
+    insights.push({
+      tone: "success",
+      text: t("dash_insight_trips_completed", { count: data.kpis.completedTrips }),
+    });
+  }
+  if (data.alerts.expiringLicenses.length > 0) {
+    insights.push({
+      tone: "danger",
+      text: t("dash_insight_licenses_expiring", { count: data.alerts.expiringLicenses.length }),
+    });
+  }
+  return insights;
+}
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TransitOps" }] }),
@@ -60,6 +110,7 @@ function DashboardPage() {
 }
 
 function OperationsDashboardView() {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<DashboardFilters>({});
 
   const { data, isLoading, isFetching, error } = useQuery({
@@ -84,7 +135,7 @@ function OperationsDashboardView() {
     return (
       <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
-        Loading dashboard…
+        {t("dash_loading")}
       </div>
     );
   }
@@ -92,18 +143,21 @@ function OperationsDashboardView() {
   if (error || !data) {
     return (
       <div className="brutal-card p-8 text-center text-destructive">
-        {error instanceof Error ? error.message : "Failed to load dashboard data."}
+        {error instanceof Error ? error.message : t("dash_load_failed")}
       </div>
     );
   }
 
-  const kpis = buildKpiCards(data);
+  const kpis = buildKpiCards(data, t);
+  const insights = buildInsights(data, t);
+  const tripStatusChart = mapChartLabels(data.charts.tripStatus, TRIP_STATUS_CHART, t);
+  const maintenanceChart = mapChartLabels(data.charts.maintenanceStatus, MAINTENANCE_CHART, t);
 
   return (
     <div>
       <PageHeader
-        title="Operations dashboard"
-        subtitle="Live overview of your fleet, drivers, and trips."
+        title={t("dash_ops_title")}
+        subtitle={t("dash_ops_subtitle")}
       />
 
       <DashboardFiltersBar
@@ -112,6 +166,7 @@ function OperationsDashboardView() {
         isFetching={isFetching}
         onFilterChange={updateFilter}
         onClear={() => setFilters({})}
+        t={t}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-6">
@@ -133,12 +188,12 @@ function OperationsDashboardView() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
-        {data.insights.map((insight) => (
+        {insights.map((insight) => (
           <div key={insight.text} className="brutal-card p-4 flex items-start gap-3">
             <div className="text-xl">{INSIGHT_ICONS[insight.tone] ?? "💡"}</div>
             <div>
               <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> Insight
+                <Sparkles className="h-3 w-3" /> {t("dash_insight")}
               </div>
               <div className="text-sm font-medium mt-1">{insight.text}</div>
             </div>
@@ -149,7 +204,7 @@ function OperationsDashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="brutal-card p-5 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold">Vehicles by Type</h3>
+            <h3 className="font-bold">{t("dash_chart_vehicles_by_type")}</h3>
             <Truck className="h-4 w-4 text-primary" />
           </div>
           <div className="h-52">
@@ -166,10 +221,10 @@ function OperationsDashboardView() {
         </div>
 
         <div className="brutal-card p-5 lg:col-span-1">
-          <h3 className="font-bold mb-3">Trip Status</h3>
+          <h3 className="font-bold mb-3">{t("dash_chart_trip_status")}</h3>
           <div className="h-52">
             <ResponsiveContainer>
-              <BarChart data={data.charts.tripStatus}>
+              <BarChart data={tripStatusChart}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="name" fontSize={11} />
                 <YAxis fontSize={11} />
@@ -182,7 +237,7 @@ function OperationsDashboardView() {
 
         <div className="brutal-card p-5 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold">Trip Activity (7 days)</h3>
+            <h3 className="font-bold">{t("dash_chart_trip_activity")}</h3>
             <TrendingUp className="h-4 w-4 text-primary" />
           </div>
           <div className="h-52">
@@ -201,10 +256,10 @@ function OperationsDashboardView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="brutal-card p-5 lg:col-span-2">
-          <h3 className="font-bold mb-3">Maintenance Overview</h3>
+          <h3 className="font-bold mb-3">{t("dash_chart_maintenance")}</h3>
           <div className="h-56">
             <ResponsiveContainer>
-              <BarChart data={data.charts.maintenanceStatus}>
+              <BarChart data={maintenanceChart}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="name" fontSize={11} />
                 <YAxis fontSize={11} allowDecimals={false} />
@@ -217,7 +272,7 @@ function OperationsDashboardView() {
 
         <div className="brutal-card p-5">
           <h3 className="font-bold mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-warning" /> Alerts
+            <AlertTriangle className="h-4 w-4 text-warning" /> {t("dash_alerts")}
           </h3>
           <ul className="space-y-3 text-sm">
             {data.alerts.expiringLicenses.map((d) => (
@@ -225,7 +280,7 @@ function OperationsDashboardView() {
                 <div>
                   <div className="font-semibold">{d.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    License expires in {daysUntil(d.licenseExpiry)}d
+                    {t("dash_license_expires", { days: daysUntil(d.licenseExpiry) })}
                   </div>
                 </div>
                 <StatusBadge status={d.status} />
@@ -236,7 +291,7 @@ function OperationsDashboardView() {
                 <div>
                   <div className="font-semibold">{v.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {v.registration} · in maintenance
+                    {v.registration} · {t("dash_in_maintenance")}
                   </div>
                 </div>
                 <StatusBadge status="IN_SHOP" />
@@ -254,36 +309,36 @@ function OperationsDashboardView() {
             {data.alerts.expiringLicenses.length === 0 &&
               data.alerts.vehiclesInShop.length === 0 &&
               data.alerts.openMaintenance.length === 0 && (
-                <li className="text-xs text-muted-foreground text-center py-4">No active alerts.</li>
+                <li className="text-xs text-muted-foreground text-center py-4">{t("dash_no_alerts")}</li>
               )}
           </ul>
           <Link to="/notifications" className="block text-center text-xs font-semibold text-primary hover:underline mt-4">
-            View all alerts →
+            {t("dash_view_all_alerts")}
           </Link>
         </div>
       </div>
 
       <div className="brutal-card p-5 mt-6">
-        <h3 className="font-bold mb-4">Recent activity</h3>
+        <h3 className="font-bold mb-4">{t("dash_recent_activity")}</h3>
         <ol className="relative border-l-2 border-border-soft ml-3 space-y-4 pl-6">
-          {data.recentActivity.map((t) => (
-            <li key={t.id} className="relative">
+          {data.recentActivity.map((trip) => (
+            <li key={trip.id} className="relative">
               <span className="absolute -left-[31px] top-1 h-3 w-3 rounded-full bg-primary brutal-border" />
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold">
-                    Trip {t.code} · {t.source} → {t.destination}
+                    {t("dash_trip_route", { code: trip.code, source: trip.source, destination: trip.destination })}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {t.vehicleName} · {t.driverName} · {t.distanceKm} km
+                    {trip.vehicleName} · {trip.driverName} · {trip.distanceKm} km
                   </div>
                 </div>
-                <StatusBadge status={t.status.toLowerCase()} />
+                <StatusBadge status={trip.status.toLowerCase()} />
               </div>
             </li>
           ))}
           {data.recentActivity.length === 0 && (
-            <li className="text-xs text-muted-foreground">No recent trips match the current filters.</li>
+            <li className="text-xs text-muted-foreground">{t("dash_no_recent_trips")}</li>
           )}
         </ol>
       </div>
@@ -297,12 +352,14 @@ function DashboardFiltersBar({
   isFetching,
   onFilterChange,
   onClear,
+  t,
 }: {
   data: OperationsDashboard;
   filters: DashboardFilters;
   isFetching: boolean;
   onFilterChange: (key: keyof DashboardFilters, value: string) => void;
   onClear: () => void;
+  t: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }) {
   const hasFilters = Boolean(filters.vehicleType || filters.vehicleStatus || filters.region);
 
@@ -310,43 +367,48 @@ function DashboardFiltersBar({
     <div className="brutal-card p-4 mb-6 flex flex-col lg:flex-row lg:items-end gap-3">
       <div className="flex items-center gap-2 text-sm font-bold">
         <Filter className="h-4 w-4" />
-        Filters
+        {t("dash_filters")}
         {isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-muted-foreground">Vehicle type</label>
+          <label className="text-[11px] font-semibold text-muted-foreground">{t("dash_vehicle_type")}</label>
           <Select
             value={filters.vehicleType ?? "all"}
             onValueChange={(v) => onFilterChange("vehicleType", v)}
           >
             <SelectTrigger className="brutal-border bg-card">
-              <SelectValue placeholder="All types" />
+              <SelectValue placeholder={t("dash_all_types")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              {data.filters.vehicleTypes.map((type) => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
-              ))}
+              <SelectItem value="all">{t("dash_all_types")}</SelectItem>
+              {data.filters.vehicleTypes.map((type) => {
+                const typeKey = (`vehicles_type_${type.toLowerCase()}`) as I18nKey;
+                return (
+                  <SelectItem key={type} value={type}>
+                    {typeKey in EN_TEXTS ? t(typeKey) : type}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-muted-foreground">Vehicle status</label>
+          <label className="text-[11px] font-semibold text-muted-foreground">{t("dash_vehicle_status")}</label>
           <Select
             value={filters.vehicleStatus ?? "all"}
             onValueChange={(v) => onFilterChange("vehicleStatus", v)}
           >
             <SelectTrigger className="brutal-border bg-card">
-              <SelectValue placeholder="All statuses" />
+              <SelectValue placeholder={t("dash_all_statuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">{t("dash_all_statuses")}</SelectItem>
               {data.filters.vehicleStatuses.map((status) => (
                 <SelectItem key={status} value={status}>
-                  {VEHICLE_STATUS_LABELS[status] ?? status}
+                  {VEHICLE_STATUS_LABELS[status] ? t(VEHICLE_STATUS_LABELS[status]) : status}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -354,18 +416,20 @@ function DashboardFiltersBar({
         </div>
 
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-muted-foreground">Depot / Region</label>
+          <label className="text-[11px] font-semibold text-muted-foreground">{t("dash_depot_region")}</label>
           <Select
             value={filters.region ?? "all"}
             onValueChange={(v) => onFilterChange("region", v)}
           >
             <SelectTrigger className="brutal-border bg-card">
-              <SelectValue placeholder="All regions" />
+              <SelectValue placeholder={t("dash_all_regions")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All regions</SelectItem>
+              <SelectItem value="all">{t("dash_all_regions")}</SelectItem>
               {data.filters.regions.map((region) => (
-                <SelectItem key={region} value={region}>{region}</SelectItem>
+                <SelectItem key={region} value={region}>
+                  {region.toLowerCase() === "all regions" ? t("dash_all_regions") : region}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -378,27 +442,28 @@ function DashboardFiltersBar({
           onClick={onClear}
           className="brutal-btn px-3 py-2 text-xs font-bold bg-card hover:bg-accent"
         >
-          Clear filters
+          {t("clear_filters")}
         </button>
       )}
     </div>
   );
 }
 
-function buildKpiCards(data: OperationsDashboard) {
+function buildKpiCards(data: OperationsDashboard, t: (key: I18nKey) => string) {
   const { kpis } = data;
   return [
-    { label: "Active Vehicles", value: kpis.activeVehicles, icon: Truck, tone: "primary" },
-    { label: "Available", value: kpis.availableVehicles, icon: CheckCircle2, tone: "success" },
-    { label: "In Maintenance", value: kpis.vehiclesInMaintenance, icon: Wrench, tone: "warning" },
-    { label: "Active Trips", value: kpis.activeTrips, icon: RouteIcon, tone: "primary" },
-    { label: "Pending Trips", value: kpis.pendingTrips, icon: Clock, tone: "muted" },
-    { label: "Drivers On Duty", value: kpis.driversOnDuty, icon: Users, tone: "success" },
-    { label: "Completed Trips", value: kpis.completedTrips, icon: TrendingUp, tone: "success" },
+    { label: t("dash_kpi_active_vehicles"), value: kpis.activeVehicles, icon: Truck, tone: "primary" },
+    { label: t("dash_kpi_available"), value: kpis.availableVehicles, icon: CheckCircle2, tone: "success" },
+    { label: t("dash_kpi_in_maintenance"), value: kpis.vehiclesInMaintenance, icon: Wrench, tone: "warning" },
+    { label: t("dash_kpi_active_trips"), value: kpis.activeTrips, icon: RouteIcon, tone: "primary" },
+    { label: t("dash_kpi_pending_trips"), value: kpis.pendingTrips, icon: Clock, tone: "muted" },
+    { label: t("dash_kpi_drivers_on_duty"), value: kpis.driversOnDuty, icon: Users, tone: "success" },
+    { label: t("dash_kpi_completed_trips"), value: kpis.completedTrips, icon: TrendingUp, tone: "success" },
   ];
 }
 
 function DriverConsole({ user }: { user: AuthUser }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -416,16 +481,16 @@ function DriverConsole({ user }: { user: AuthUser }) {
     onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: ["dashboard", "driver"] });
       qc.invalidateQueries({ queryKey: ["drivers"] });
-      toast.success(`Status updated to ${updated.status.replace("_", " ")}`);
+      toast.success(t("dash_status_updated", { status: updated.status.replace("_", " ") }));
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to update status"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t("dash_status_update_failed")),
   });
 
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground py-10">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Loading your driver dashboard…
+        {t("dash_driver_loading")}
       </div>
     );
   }
@@ -433,7 +498,7 @@ function DriverConsole({ user }: { user: AuthUser }) {
   if (error) {
     return (
       <div className="brutal-card p-8 text-center text-destructive">
-        {error instanceof Error ? error.message : "Failed to load your dashboard."}
+        {error instanceof Error ? error.message : t("dash_driver_load_failed")}
       </div>
     );
   }
@@ -441,8 +506,8 @@ function DriverConsole({ user }: { user: AuthUser }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My dashboard"
-        subtitle="Your assigned trips and vehicle details only."
+        title={t("dash_driver_title")}
+        subtitle={t("dash_driver_subtitle")}
       />
 
       <div className="brutal-card bg-gradient-to-r from-primary/15 via-primary/5 to-background p-6">
@@ -457,11 +522,11 @@ function DriverConsole({ user }: { user: AuthUser }) {
                 {driver && <StatusBadge status={driver.status} />}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                License:{" "}
+                {t("dash_license")}{" "}
                 <span className="font-mono font-semibold text-foreground">
                   {driver?.licenseNumber ?? "—"}
                 </span>{" "}
-                · Category:{" "}
+                · {t("dash_category")}{" "}
                 <span className="font-semibold text-foreground">
                   {driver?.licenseCategory ?? "—"}
                 </span>
@@ -471,7 +536,7 @@ function DriverConsole({ user }: { user: AuthUser }) {
 
           <div className="flex items-center gap-2 bg-muted/50 border border-border-soft px-4 py-2.5 rounded-xl">
             <span className="text-xs font-bold text-muted-foreground">
-              Availability status is managed exclusively by Dispatch.
+              {t("dash_dispatch_managed")}
             </span>
           </div>
         </div>
@@ -481,10 +546,10 @@ function DriverConsole({ user }: { user: AuthUser }) {
         <div className="brutal-card p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-extrabold flex items-center gap-2">
-              <Truck className="h-4 w-4 text-primary" /> Assigned Vehicle
+              <Truck className="h-4 w-4 text-primary" /> {t("dash_assigned_vehicle")}
             </h2>
             <Link to="/vehicles" className="text-xs font-bold text-primary hover:underline">
-              View Vehicle Registry →
+              {t("dash_view_registry")}
             </Link>
           </div>
           {assignedVehicle ? (
@@ -498,24 +563,24 @@ function DriverConsole({ user }: { user: AuthUser }) {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-border-soft text-xs">
                 <div>
-                  <div className="text-muted-foreground">Reg #</div>
+                  <div className="text-muted-foreground">{t("dash_reg_number")}</div>
                   <div className="font-mono font-bold text-sm">{assignedVehicle.registration}</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Max Capacity</div>
+                  <div className="text-muted-foreground">{t("dash_max_capacity")}</div>
                   <div className="font-bold">{assignedVehicle.capacityKg} kg</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Odometer</div>
+                  <div className="text-muted-foreground">{t("dash_odometer")}</div>
                   <div className="font-bold">{assignedVehicle.odometerKm.toLocaleString()} km</div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="p-6 text-center text-muted-foreground text-sm bg-muted/20 rounded-xl border border-dashed border-border-soft space-y-2">
-              <p>No active vehicle assigned right now.</p>
+              <p>{t("dash_no_vehicle")}</p>
               <Link to="/vehicles" className="inline-block text-xs font-bold text-primary hover:underline">
-                Inspect master vehicle registry
+                {t("dash_inspect_registry")}
               </Link>
             </div>
           )}

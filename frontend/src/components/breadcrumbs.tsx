@@ -1,18 +1,23 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ChevronRight, Home } from "lucide-react";
+import { useTranslation, crumbKey } from "@/lib/i18n";
 
-// Convert /vehicles/v1/edit -> [Dashboard, Vehicles, v1, Edit]
 export function Breadcrumbs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = useTranslation();
   const parts = useMemo(() => pathname.split("/").filter(Boolean), [pathname]);
 
-  const crumbs: { label: string; href: string }[] = [{ label: "Dashboard", href: "/dashboard" }];
+  const crumbs: { label: string; href: string }[] = [
+    { label: t("crumb_dashboard"), href: "/dashboard" },
+  ];
+
   let acc = "";
   for (const p of parts) {
     acc += `/${p}`;
     if (p === "dashboard") continue;
-    crumbs.push({ label: prettify(p), href: acc });
+    const key = crumbKey(p);
+    crumbs.push({ label: key ? t(key) : prettify(p), href: acc });
   }
 
   return (

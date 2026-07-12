@@ -5,41 +5,64 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useTransitStore } from "@/lib/store";
+import { useTranslation, type I18nKey } from "@/lib/i18n";
 import { toast } from "sonner";
 import type { Expense } from "@/lib/mock-data";
 
+const CAT_KEYS: Record<Exclude<Expense["category"], "fuel" | "maintenance">, I18nKey> = {
+  tolls: "expenses_cat_tolls",
+  insurance: "expenses_cat_insurance",
+  other: "expenses_cat_other",
+};
+
 export const Route = createFileRoute("/_app/expenses/new")({
   head: () => ({ meta: [{ title: "Add expense — TransitOps" }] }),
-  component: () => {
-    const { vehicles, addExpense } = useTransitStore();
-    const nav = useNavigate();
-    const [f, setF] = useState<{ vehicleId: string; category: Exclude<Expense["category"], "fuel" | "maintenance">; amount: number; note: string }>({ vehicleId: "", category: "other", amount: 0, note: "" });
-    return (
-      <div>
-        <PageHeader title="Add expense" />
-        <form onSubmit={(e) => {
+  component: NewExpensePage,
+});
+
+function NewExpensePage() {
+  const { t } = useTranslation();
+  const { vehicles, addExpense } = useTransitStore();
+  const nav = useNavigate();
+  const [f, setF] = useState<{ vehicleId: string; category: Exclude<Expense["category"], "fuel" | "maintenance">; amount: number; note: string }>({
+    vehicleId: "", category: "other", amount: 0, note: "",
+  });
+
+  return (
+    <div>
+      <PageHeader title={t("expenses_new_title")} />
+      <form
+        onSubmit={(e) => {
           e.preventDefault();
-          if (!f.vehicleId) return toast.error("Select a vehicle");
+          if (!f.vehicleId) return toast.error(t("fuel_select_vehicle"));
           void addExpense({ id: `e${Date.now()}`, ...f, date: new Date().toISOString() });
-          toast.success("Expense added");
+          toast.success(t("expenses_added"));
           nav({ to: "/expenses" });
         }}
-          className="brutal-card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
-          <div className="space-y-1.5"><Label className="text-xs font-semibold">Category</Label>
-            <select className="brutal-input w-full" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value as Exclude<Expense["category"], "fuel" | "maintenance"> })}>
-              <option value="tolls">Tolls</option><option value="insurance">Insurance</option><option value="other">Other</option>
-            </select>
-          </div>
-          <div className="space-y-1.5"><Label className="text-xs font-semibold">Vehicle</Label>
-            <select className="brutal-input w-full" value={f.vehicleId} onChange={(e) => setF({ ...f, vehicleId: e.target.value })}>
-              <option value="">Select…</option>{vehicles.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
-          </div>
-          <div className="space-y-1.5"><Label className="text-xs font-semibold">Amount ($)</Label><Input type="number" className="brutal-input" value={f.amount} onChange={(e) => setF({ ...f, amount: +e.target.value })} /></div>
-          <div className="space-y-1.5"><Label className="text-xs font-semibold">Note</Label><Input className="brutal-input" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
-          <div className="md:col-span-2 flex justify-end gap-2"><Button variant="outline" type="button" className="brutal-btn bg-card" onClick={() => nav({ to: "/expenses" })}>Cancel</Button><Button className="brutal-btn bg-primary text-primary-foreground">Save</Button></div>
-        </form>
-      </div>
-    );
-  },
-});
+        className="brutal-card p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl"
+      >
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold">{t("category")}</Label>
+          <select className="brutal-input w-full" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value as Exclude<Expense["category"], "fuel" | "maintenance"> })}>
+            {(["tolls", "insurance", "other"] as const).map((c) => (
+              <option key={c} value={c}>{t(CAT_KEYS[c])}</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold">{t("vehicle")}</Label>
+          <select className="brutal-input w-full" value={f.vehicleId} onChange={(e) => setF({ ...f, vehicleId: e.target.value })}>
+            <option value="">{t("select_placeholder")}</option>
+            {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1.5"><Label className="text-xs font-semibold">{t("expenses_amount_usd")}</Label><Input type="number" className="brutal-input" value={f.amount} onChange={(e) => setF({ ...f, amount: +e.target.value })} /></div>
+        <div className="space-y-1.5"><Label className="text-xs font-semibold">{t("note")}</Label><Input className="brutal-input" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
+        <div className="md:col-span-2 flex justify-end gap-2">
+          <Button variant="outline" type="button" className="brutal-btn bg-card" onClick={() => nav({ to: "/expenses" })}>{t("cancel")}</Button>
+          <Button className="brutal-btn bg-primary text-primary-foreground">{t("save")}</Button>
+        </div>
+      </form>
+    </div>
+  );
+}
