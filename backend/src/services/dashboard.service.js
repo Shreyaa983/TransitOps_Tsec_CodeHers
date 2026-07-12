@@ -3,13 +3,10 @@ import Vehicle from '../models/vehicle.model.js';
 import Driver from '../models/driver.model.js';
 import Trip from '../models/trip.model.js';
 import MaintenanceLog from '../models/maintenanceLog.model.js';
-import FuelLog from '../models/fuelLog.model.js';
-import Expense from '../models/expense.model.js';
 
 const VEHICLE_STATUSES = ['AVAILABLE', 'ON_TRIP', 'IN_SHOP', 'RETIRED'];
 const TRIP_STATUSES = ['DRAFT', 'DISPATCHED', 'COMPLETED', 'CANCELLED'];
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const NO_MATCH_ID = new mongoose.Types.ObjectId('000000000000000000000000');
 
@@ -85,11 +82,6 @@ export async function getOperationsDashboard(query = {}) {
   const weekStart = startOfDay(now);
   weekStart.setDate(weekStart.getDate() - 6);
 
-  const prevWeekStart = startOfDay(weekStart);
-  prevWeekStart.setDate(prevWeekStart.getDate() - 7);
-
-  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-
   const [
     vehicles,
     tripDocs,
@@ -97,9 +89,8 @@ export async function getOperationsDashboard(query = {}) {
     expiringLicenses,
     vehiclesInShop,
     openMaintenance,
-    fuelThisWeek,
-    fuelPrevWeek,
-    monthlyExpenses,
+    closedMaintenanceCount,
+    weekTrips,
     recentTrips,
     filterOptions,
   ] = await Promise.all([
@@ -123,30 +114,12 @@ export async function getOperationsDashboard(query = {}) {
       .sort({ openedAt: -1 })
       .limit(5)
       .lean(),
-    FuelLog.aggregate([
-      { $match: { date: { $gte: weekStart } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
-          litres: { $sum: '$liters' },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]),
-    FuelLog.aggregate([
-      { $match: { date: { $gte: prevWeekStart, $lt: weekStart } } },
-      { $group: { _id: null, litres: { $sum: '$liters' } } },
-    ]),
-    Expense.aggregate([
-      { $match: { date: { $gte: sixMonthsAgo } } },
-      {
-        $group: {
-          _id: { year: { $year: '$date' }, month: { $month: '$date' } },
-          amount: { $sum: '$amount' },
-        },
-      },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
-    ]),
+    MaintenanceLog.countDocuments({ status: 'CLOSED' }),
+    Trip.find(tripFilter)
+      .select('updatedAt dispatchTime')
+      .where('updatedAt')
+      .gte(weekStart)
+      .lean(),
     Trip.find(tripFilter)
       .populate('vehicle', 'name registrationNumber')
       .populate('driver', 'name')
@@ -160,45 +133,37 @@ export async function getOperationsDashboard(query = {}) {
   const tripCounts = countByStatus(tripDocs, 'status', TRIP_STATUSES);
 
   const activeFleet = vehicles.filter((v) => v.status !== 'RETIRED').length;
-  const onTrip = vehicleCounts.ON_TRIP ?? 0;
-  const fleetUtilizationPct =
-    activeFleet > 0 ? Math.round((onTrip / activeFleet) * 100) : 0;
+  const completedTrips = tripCounts.COMPLETED ?? 0;
 
-  const fuelWeekly = [];
+  const tripsWeekly = [];
   for (let i = 0; i < 7; i += 1) {
     const day = new Date(weekStart);
     day.setDate(day.getDate() + i);
-    const key = day.toISOString().slice(0, 10);
-    const match = fuelThisWeek.find((row) => row._id === key);
-    fuelWeekly.push({
+    const dayEnd = new Date(day);
+    dayEnd.setHours(23, 59, 59, 999);
+    const count = weekTrips.filter((t) => {
+      const d = t.updatedAt ? new Date(t.updatedAt) : null;
+      return d && d >= day && d <= dayEnd;
+    }).length;
+    tripsWeekly.push({
       day: DAY_LABELS[day.getDay()],
-      litres: Math.round(match?.litres ?? 0),
+      trips: count,
     });
   }
 
-  const expensesChart = monthlyExpenses.map((row) => ({
-    month: MONTH_LABELS[row._id.month - 1],
-    amount: Math.round(row.amount),
-  }));
+  const vehiclesByType = Object.entries(
+    vehicles.reduce((acc, v) => {
+      acc[v.type] = (acc[v.type] ?? 0) + 1;
+      return acc;
+    }, {}),
+  ).map(([name, value]) => ({ name, value }));
 
-  const thisWeekFuel = fuelThisWeek.reduce((sum, row) => sum + row.litres, 0);
-  const prevWeekFuel = fuelPrevWeek[0]?.litres ?? 0;
-  const fuelDeltaPct =
-    prevWeekFuel > 0
-      ? Math.round(((thisWeekFuel - prevWeekFuel) / prevWeekFuel) * 100)
-      : null;
+  const maintenanceStatus = [
+    { name: 'Open', value: openMaintenance.length },
+    { name: 'Closed', value: closedMaintenanceCount },
+  ];
 
   const insights = [];
-
-  if (fuelDeltaPct !== null && fuelDeltaPct !== 0) {
-    insights.push({
-      tone: fuelDeltaPct > 0 ? 'warning' : 'success',
-      text:
-        fuelDeltaPct > 0
-          ? `Fuel consumption increased ${fuelDeltaPct}% vs last week.`
-          : `Fuel consumption decreased ${Math.abs(fuelDeltaPct)}% vs last week.`,
-    });
-  }
 
   if (vehiclesInShop.length > 0) {
     insights.push({
@@ -207,10 +172,12 @@ export async function getOperationsDashboard(query = {}) {
     });
   }
 
-  insights.push({
-    tone: fleetUtilizationPct >= 50 ? 'success' : 'primary',
-    text: `Fleet utilization is at ${fleetUtilizationPct}% across the active fleet.`,
-  });
+  if (completedTrips > 0) {
+    insights.push({
+      tone: 'success',
+      text: `${completedTrips} trip${completedTrips === 1 ? '' : 's'} completed in the current filter scope.`,
+    });
+  }
 
   if (expiringLicenses.length > 0) {
     insights.push({
@@ -227,23 +194,18 @@ export async function getOperationsDashboard(query = {}) {
       activeTrips: tripCounts.DISPATCHED ?? 0,
       pendingTrips: tripCounts.DRAFT ?? 0,
       driversOnDuty,
-      fleetUtilizationPct,
+      completedTrips,
     },
     charts: {
-      fleetUtilization: [
-        { name: 'On Trip', value: vehicleCounts.ON_TRIP ?? 0 },
-        { name: 'Available', value: vehicleCounts.AVAILABLE ?? 0 },
-        { name: 'In Shop', value: vehicleCounts.IN_SHOP ?? 0 },
-        { name: 'Retired', value: vehicleCounts.RETIRED ?? 0 },
-      ],
+      vehiclesByType,
       tripStatus: [
         { name: 'Draft', value: tripCounts.DRAFT ?? 0 },
         { name: 'Dispatched', value: tripCounts.DISPATCHED ?? 0 },
         { name: 'Completed', value: tripCounts.COMPLETED ?? 0 },
         { name: 'Cancelled', value: tripCounts.CANCELLED ?? 0 },
       ],
-      fuelWeekly,
-      monthlyExpenses: expensesChart,
+      tripsWeekly,
+      maintenanceStatus,
     },
     alerts: {
       expiringLicenses: expiringLicenses.map((d) => ({

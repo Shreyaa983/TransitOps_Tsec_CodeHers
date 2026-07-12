@@ -307,7 +307,7 @@ export const useUI = create<UIState>()(
 // Role → allowed top-level sections
 export const roleAccess: Record<Role, string[]> = {
   fleet_manager: ["dashboard", "vehicles", "drivers", "trips", "maintenance", "fuel", "expenses", "reports", "ai-copilot", "notifications", "settings"],
-  dispatcher: ["dashboard", "vehicles", "drivers", "trips", "notifications", "ai-copilot", "settings"],
+  dispatcher: ["dashboard", "vehicles", "drivers", "trips", "reports", "notifications", "ai-copilot", "settings"],
   safety_officer: ["dashboard", "drivers", "maintenance", "reports", "notifications", "settings"],
   financial_analyst: ["dashboard", "fuel", "expenses", "reports", "notifications", "settings"],
   driver: ["dashboard", "vehicles", "trips", "maintenance", "fuel", "notifications", "settings"],

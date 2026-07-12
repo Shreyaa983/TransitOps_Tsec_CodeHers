@@ -15,12 +15,11 @@ export type DashboardKpis = {
   activeTrips: number;
   pendingTrips: number;
   driversOnDuty: number;
-  fleetUtilizationPct: number;
+  completedTrips: number;
 };
 
 export type ChartPoint = { name: string; value: number };
-export type FuelPoint = { day: string; litres: number };
-export type ExpensePoint = { month: string; amount: number };
+export type TripPoint = { day: string; trips: number };
 
 export type DashboardInsight = {
   tone: "warning" | "primary" | "success" | "danger";
@@ -69,10 +68,10 @@ export type DashboardFilterOptions = {
 export type OperationsDashboard = {
   kpis: DashboardKpis;
   charts: {
-    fleetUtilization: ChartPoint[];
+    vehiclesByType: ChartPoint[];
     tripStatus: ChartPoint[];
-    fuelWeekly: FuelPoint[];
-    monthlyExpenses: ExpensePoint[];
+    tripsWeekly: TripPoint[];
+    maintenanceStatus: ChartPoint[];
   };
   alerts: {
     expiringLicenses: DashboardAlertDriver[];

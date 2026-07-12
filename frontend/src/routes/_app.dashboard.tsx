@@ -3,12 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Truck, CheckCircle2, Wrench, Route as RouteIcon, Clock, Users, Activity,
-  TrendingUp, AlertTriangle, Sparkles, Fuel, Filter, Loader2,
+  Truck, CheckCircle2, Wrench, Route as RouteIcon, Clock, Users,
+  TrendingUp, AlertTriangle, Sparkles, Filter, Loader2,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, CartesianGrid,
+  LineChart, Line, CartesianGrid,
 } from "recharts";
 import { useAuth, type AuthUser } from "@/lib/store";
 import { driversApi, type DriverStatus } from "@/lib/drivers-api";
@@ -32,13 +32,10 @@ const DRIVER_STATUS_OPTIONS: { value: DriverStatus; label: string }[] = [
 ];
 
 const INSIGHT_ICONS: Record<string, string> = {
-  warning: "⚠",
   primary: "🚛",
   success: "📈",
   danger: "👤",
 };
-
-const PIE_COLORS = ["var(--primary)", "var(--success)", "var(--warning)", "var(--muted-foreground)"];
 
 const VEHICLE_STATUS_LABELS: Record<string, string> = {
   AVAILABLE: "Available",
@@ -152,36 +149,19 @@ function OperationsDashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="brutal-card p-5 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold">Fleet Utilization</h3>
-            <TrendingUp className="h-4 w-4 text-primary" />
+            <h3 className="font-bold">Vehicles by Type</h3>
+            <Truck className="h-4 w-4 text-primary" />
           </div>
           <div className="h-52">
             <ResponsiveContainer>
-              <PieChart>
-                <Pie
-                  data={data.charts.fleetUtilization}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={45}
-                  outerRadius={75}
-                  paddingAngle={2}
-                >
-                  {data.charts.fleetUtilization.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i]} />
-                  ))}
-                </Pie>
+              <BarChart data={data.charts.vehiclesByType}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="name" fontSize={11} />
+                <YAxis fontSize={11} />
                 <Tooltip />
-              </PieChart>
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="var(--primary)" />
+              </BarChart>
             </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-            {data.charts.fleetUtilization.map((u, i) => (
-              <div key={u.name} className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PIE_COLORS[i] }} />
-                <span className="text-muted-foreground">{u.name}</span>
-                <span className="ml-auto font-semibold">{u.value}</span>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -202,17 +182,17 @@ function OperationsDashboardView() {
 
         <div className="brutal-card p-5 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold">Fuel Consumption (L/day)</h3>
-            <Fuel className="h-4 w-4 text-warning" />
+            <h3 className="font-bold">Trip Activity (7 days)</h3>
+            <TrendingUp className="h-4 w-4 text-primary" />
           </div>
           <div className="h-52">
             <ResponsiveContainer>
-              <LineChart data={data.charts.fuelWeekly}>
+              <LineChart data={data.charts.tripsWeekly}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="day" fontSize={11} />
-                <YAxis fontSize={11} />
+                <YAxis fontSize={11} allowDecimals={false} />
                 <Tooltip />
-                <Line type="monotone" dataKey="litres" stroke="var(--warning)" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="trips" stroke="var(--primary)" strokeWidth={2.5} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -221,15 +201,15 @@ function OperationsDashboardView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="brutal-card p-5 lg:col-span-2">
-          <h3 className="font-bold mb-3">Monthly Expenses</h3>
+          <h3 className="font-bold mb-3">Maintenance Overview</h3>
           <div className="h-56">
             <ResponsiveContainer>
-              <BarChart data={data.charts.monthlyExpenses}>
+              <BarChart data={data.charts.maintenanceStatus}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="month" fontSize={11} />
-                <YAxis fontSize={11} tickFormatter={(v) => `$${v / 1000}k`} />
-                <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
-                <Bar dataKey="amount" radius={[6, 6, 0, 0]} fill="var(--secondary)" />
+                <XAxis dataKey="name" fontSize={11} />
+                <YAxis fontSize={11} allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} fill="var(--warning)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -414,7 +394,7 @@ function buildKpiCards(data: OperationsDashboard) {
     { label: "Active Trips", value: kpis.activeTrips, icon: RouteIcon, tone: "primary" },
     { label: "Pending Trips", value: kpis.pendingTrips, icon: Clock, tone: "muted" },
     { label: "Drivers On Duty", value: kpis.driversOnDuty, icon: Users, tone: "success" },
-    { label: "Fleet Utilization", value: `${kpis.fleetUtilizationPct}%`, icon: Activity, tone: "secondary" },
+    { label: "Completed Trips", value: kpis.completedTrips, icon: TrendingUp, tone: "success" },
   ];
 }
 

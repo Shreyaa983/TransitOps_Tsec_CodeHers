@@ -13,7 +13,7 @@ const items = [
   { key: "maintenance", to: "/maintenance", icon: Wrench, label: "Maintenance" },
   { key: "fuel", to: "/fuel", icon: Fuel, label: "Fuel" },
   { key: "expenses", to: "/expenses", icon: Receipt, label: "Expenses" },
-  { key: "reports", to: "/reports", icon: BarChart3, label: "Reports" },
+  { key: "reports", to: "/reports", icon: BarChart3, label: "Reports & Analytics" },
   { key: "ai-copilot", to: "/ai-copilot", icon: Sparkles, label: "AI Copilot" },
   { key: "notifications", to: "/notifications", icon: Bell, label: "Notifications" },
   { key: "settings", to: "/settings", icon: Settings, label: "Settings" },
