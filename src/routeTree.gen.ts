@@ -16,16 +16,21 @@ import { Route as PublicLoginRouteImport } from './routes/_public.login'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public.forgot-password'
 import { Route as AppVehiclesRouteImport } from './routes/_app.vehicles'
 import { Route as AppTripsRouteImport } from './routes/_app.trips'
+import { Route as AppMaintenanceRouteImport } from './routes/_app.maintenance'
 import { Route as AppDriversRouteImport } from './routes/_app.drivers'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppVehiclesIndexRouteImport } from './routes/_app.vehicles.index'
 import { Route as AppTripsIndexRouteImport } from './routes/_app.trips.index'
+import { Route as AppMaintenanceIndexRouteImport } from './routes/_app.maintenance.index'
 import { Route as AppDriversIndexRouteImport } from './routes/_app.drivers.index'
 import { Route as AppVehiclesNewRouteImport } from './routes/_app.vehicles.new'
 import { Route as AppVehiclesVehicleIdRouteImport } from './routes/_app.vehicles.$vehicleId'
 import { Route as AppTripsNewRouteImport } from './routes/_app.trips.new'
 import { Route as AppTripsHistoryRouteImport } from './routes/_app.trips.history'
 import { Route as AppTripsTripIdRouteImport } from './routes/_app.trips.$tripId'
+import { Route as AppMaintenanceScheduleRouteImport } from './routes/_app.maintenance.schedule'
+import { Route as AppMaintenanceNewRouteImport } from './routes/_app.maintenance.new'
+import { Route as AppMaintenanceMaintenanceIdRouteImport } from './routes/_app.maintenance.$maintenanceId'
 import { Route as AppDriversNewRouteImport } from './routes/_app.drivers.new'
 import { Route as AppDriversDriverIdRouteImport } from './routes/_app.drivers.$driverId'
 import { Route as AppVehiclesVehicleIdEditRouteImport } from './routes/_app.vehicles.$vehicleId.edit'
@@ -33,6 +38,7 @@ import { Route as AppVehiclesVehicleIdDocumentsRouteImport } from './routes/_app
 import { Route as AppTripsTripIdEditRouteImport } from './routes/_app.trips.$tripId.edit'
 import { Route as AppTripsTripIdDispatchRouteImport } from './routes/_app.trips.$tripId.dispatch'
 import { Route as AppTripsTripIdCompleteRouteImport } from './routes/_app.trips.$tripId.complete'
+import { Route as AppMaintenanceMaintenanceIdEditRouteImport } from './routes/_app.maintenance.$maintenanceId.edit'
 import { Route as AppDriversDriverIdLicensesRouteImport } from './routes/_app.drivers.$driverId.licenses'
 import { Route as AppDriversDriverIdEditRouteImport } from './routes/_app.drivers.$driverId.edit'
 
@@ -69,6 +75,11 @@ const AppTripsRoute = AppTripsRouteImport.update({
   path: '/trips',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMaintenanceRoute = AppMaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDriversRoute = AppDriversRouteImport.update({
   id: '/drivers',
   path: '/drivers',
@@ -88,6 +99,11 @@ const AppTripsIndexRoute = AppTripsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppTripsRoute,
+} as any)
+const AppMaintenanceIndexRoute = AppMaintenanceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppMaintenanceRoute,
 } as any)
 const AppDriversIndexRoute = AppDriversIndexRouteImport.update({
   id: '/',
@@ -119,6 +135,22 @@ const AppTripsTripIdRoute = AppTripsTripIdRouteImport.update({
   path: '/$tripId',
   getParentRoute: () => AppTripsRoute,
 } as any)
+const AppMaintenanceScheduleRoute = AppMaintenanceScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => AppMaintenanceRoute,
+} as any)
+const AppMaintenanceNewRoute = AppMaintenanceNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppMaintenanceRoute,
+} as any)
+const AppMaintenanceMaintenanceIdRoute =
+  AppMaintenanceMaintenanceIdRouteImport.update({
+    id: '/$maintenanceId',
+    path: '/$maintenanceId',
+    getParentRoute: () => AppMaintenanceRoute,
+  } as any)
 const AppDriversNewRoute = AppDriversNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -156,6 +188,12 @@ const AppTripsTripIdCompleteRoute = AppTripsTripIdCompleteRouteImport.update({
   path: '/complete',
   getParentRoute: () => AppTripsTripIdRoute,
 } as any)
+const AppMaintenanceMaintenanceIdEditRoute =
+  AppMaintenanceMaintenanceIdEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => AppMaintenanceMaintenanceIdRoute,
+  } as any)
 const AppDriversDriverIdLicensesRoute =
   AppDriversDriverIdLicensesRouteImport.update({
     id: '/licenses',
@@ -172,22 +210,28 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AppDashboardRoute
   '/drivers': typeof AppDriversRouteWithChildren
+  '/maintenance': typeof AppMaintenanceRouteWithChildren
   '/trips': typeof AppTripsRouteWithChildren
   '/vehicles': typeof AppVehiclesRouteWithChildren
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/login': typeof PublicLoginRoute
   '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/drivers/new': typeof AppDriversNewRoute
+  '/maintenance/$maintenanceId': typeof AppMaintenanceMaintenanceIdRouteWithChildren
+  '/maintenance/new': typeof AppMaintenanceNewRoute
+  '/maintenance/schedule': typeof AppMaintenanceScheduleRoute
   '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/trips/history': typeof AppTripsHistoryRoute
   '/trips/new': typeof AppTripsNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
   '/drivers/': typeof AppDriversIndexRoute
+  '/maintenance/': typeof AppMaintenanceIndexRoute
   '/trips/': typeof AppTripsIndexRoute
   '/vehicles/': typeof AppVehiclesIndexRoute
   '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
   '/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
+  '/maintenance/$maintenanceId/edit': typeof AppMaintenanceMaintenanceIdEditRoute
   '/trips/$tripId/complete': typeof AppTripsTripIdCompleteRoute
   '/trips/$tripId/dispatch': typeof AppTripsTripIdDispatchRoute
   '/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
@@ -201,16 +245,21 @@ export interface FileRoutesByTo {
   '/login': typeof PublicLoginRoute
   '/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/drivers/new': typeof AppDriversNewRoute
+  '/maintenance/$maintenanceId': typeof AppMaintenanceMaintenanceIdRouteWithChildren
+  '/maintenance/new': typeof AppMaintenanceNewRoute
+  '/maintenance/schedule': typeof AppMaintenanceScheduleRoute
   '/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/trips/history': typeof AppTripsHistoryRoute
   '/trips/new': typeof AppTripsNewRoute
   '/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/vehicles/new': typeof AppVehiclesNewRoute
   '/drivers': typeof AppDriversIndexRoute
+  '/maintenance': typeof AppMaintenanceIndexRoute
   '/trips': typeof AppTripsIndexRoute
   '/vehicles': typeof AppVehiclesIndexRoute
   '/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
   '/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
+  '/maintenance/$maintenanceId/edit': typeof AppMaintenanceMaintenanceIdEditRoute
   '/trips/$tripId/complete': typeof AppTripsTripIdCompleteRoute
   '/trips/$tripId/dispatch': typeof AppTripsTripIdDispatchRoute
   '/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
@@ -224,22 +273,28 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/drivers': typeof AppDriversRouteWithChildren
+  '/_app/maintenance': typeof AppMaintenanceRouteWithChildren
   '/_app/trips': typeof AppTripsRouteWithChildren
   '/_app/vehicles': typeof AppVehiclesRouteWithChildren
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/login': typeof PublicLoginRoute
   '/_app/drivers/$driverId': typeof AppDriversDriverIdRouteWithChildren
   '/_app/drivers/new': typeof AppDriversNewRoute
+  '/_app/maintenance/$maintenanceId': typeof AppMaintenanceMaintenanceIdRouteWithChildren
+  '/_app/maintenance/new': typeof AppMaintenanceNewRoute
+  '/_app/maintenance/schedule': typeof AppMaintenanceScheduleRoute
   '/_app/trips/$tripId': typeof AppTripsTripIdRouteWithChildren
   '/_app/trips/history': typeof AppTripsHistoryRoute
   '/_app/trips/new': typeof AppTripsNewRoute
   '/_app/vehicles/$vehicleId': typeof AppVehiclesVehicleIdRouteWithChildren
   '/_app/vehicles/new': typeof AppVehiclesNewRoute
   '/_app/drivers/': typeof AppDriversIndexRoute
+  '/_app/maintenance/': typeof AppMaintenanceIndexRoute
   '/_app/trips/': typeof AppTripsIndexRoute
   '/_app/vehicles/': typeof AppVehiclesIndexRoute
   '/_app/drivers/$driverId/edit': typeof AppDriversDriverIdEditRoute
   '/_app/drivers/$driverId/licenses': typeof AppDriversDriverIdLicensesRoute
+  '/_app/maintenance/$maintenanceId/edit': typeof AppMaintenanceMaintenanceIdEditRoute
   '/_app/trips/$tripId/complete': typeof AppTripsTripIdCompleteRoute
   '/_app/trips/$tripId/dispatch': typeof AppTripsTripIdDispatchRoute
   '/_app/trips/$tripId/edit': typeof AppTripsTripIdEditRoute
@@ -252,22 +307,28 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/drivers'
+    | '/maintenance'
     | '/trips'
     | '/vehicles'
     | '/forgot-password'
     | '/login'
     | '/drivers/$driverId'
     | '/drivers/new'
+    | '/maintenance/$maintenanceId'
+    | '/maintenance/new'
+    | '/maintenance/schedule'
     | '/trips/$tripId'
     | '/trips/history'
     | '/trips/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
     | '/drivers/'
+    | '/maintenance/'
     | '/trips/'
     | '/vehicles/'
     | '/drivers/$driverId/edit'
     | '/drivers/$driverId/licenses'
+    | '/maintenance/$maintenanceId/edit'
     | '/trips/$tripId/complete'
     | '/trips/$tripId/dispatch'
     | '/trips/$tripId/edit'
@@ -281,16 +342,21 @@ export interface FileRouteTypes {
     | '/login'
     | '/drivers/$driverId'
     | '/drivers/new'
+    | '/maintenance/$maintenanceId'
+    | '/maintenance/new'
+    | '/maintenance/schedule'
     | '/trips/$tripId'
     | '/trips/history'
     | '/trips/new'
     | '/vehicles/$vehicleId'
     | '/vehicles/new'
     | '/drivers'
+    | '/maintenance'
     | '/trips'
     | '/vehicles'
     | '/drivers/$driverId/edit'
     | '/drivers/$driverId/licenses'
+    | '/maintenance/$maintenanceId/edit'
     | '/trips/$tripId/complete'
     | '/trips/$tripId/dispatch'
     | '/trips/$tripId/edit'
@@ -303,22 +369,28 @@ export interface FileRouteTypes {
     | '/_public'
     | '/_app/dashboard'
     | '/_app/drivers'
+    | '/_app/maintenance'
     | '/_app/trips'
     | '/_app/vehicles'
     | '/_public/forgot-password'
     | '/_public/login'
     | '/_app/drivers/$driverId'
     | '/_app/drivers/new'
+    | '/_app/maintenance/$maintenanceId'
+    | '/_app/maintenance/new'
+    | '/_app/maintenance/schedule'
     | '/_app/trips/$tripId'
     | '/_app/trips/history'
     | '/_app/trips/new'
     | '/_app/vehicles/$vehicleId'
     | '/_app/vehicles/new'
     | '/_app/drivers/'
+    | '/_app/maintenance/'
     | '/_app/trips/'
     | '/_app/vehicles/'
     | '/_app/drivers/$driverId/edit'
     | '/_app/drivers/$driverId/licenses'
+    | '/_app/maintenance/$maintenanceId/edit'
     | '/_app/trips/$tripId/complete'
     | '/_app/trips/$tripId/dispatch'
     | '/_app/trips/$tripId/edit'
@@ -383,6 +455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTripsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/maintenance': {
+      id: '/_app/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof AppMaintenanceRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/drivers': {
       id: '/_app/drivers'
       path: '/drivers'
@@ -410,6 +489,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/trips/'
       preLoaderRoute: typeof AppTripsIndexRouteImport
       parentRoute: typeof AppTripsRoute
+    }
+    '/_app/maintenance/': {
+      id: '/_app/maintenance/'
+      path: '/'
+      fullPath: '/maintenance/'
+      preLoaderRoute: typeof AppMaintenanceIndexRouteImport
+      parentRoute: typeof AppMaintenanceRoute
     }
     '/_app/drivers/': {
       id: '/_app/drivers/'
@@ -452,6 +538,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/trips/$tripId'
       preLoaderRoute: typeof AppTripsTripIdRouteImport
       parentRoute: typeof AppTripsRoute
+    }
+    '/_app/maintenance/schedule': {
+      id: '/_app/maintenance/schedule'
+      path: '/schedule'
+      fullPath: '/maintenance/schedule'
+      preLoaderRoute: typeof AppMaintenanceScheduleRouteImport
+      parentRoute: typeof AppMaintenanceRoute
+    }
+    '/_app/maintenance/new': {
+      id: '/_app/maintenance/new'
+      path: '/new'
+      fullPath: '/maintenance/new'
+      preLoaderRoute: typeof AppMaintenanceNewRouteImport
+      parentRoute: typeof AppMaintenanceRoute
+    }
+    '/_app/maintenance/$maintenanceId': {
+      id: '/_app/maintenance/$maintenanceId'
+      path: '/$maintenanceId'
+      fullPath: '/maintenance/$maintenanceId'
+      preLoaderRoute: typeof AppMaintenanceMaintenanceIdRouteImport
+      parentRoute: typeof AppMaintenanceRoute
     }
     '/_app/drivers/new': {
       id: '/_app/drivers/new'
@@ -502,6 +609,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTripsTripIdCompleteRouteImport
       parentRoute: typeof AppTripsTripIdRoute
     }
+    '/_app/maintenance/$maintenanceId/edit': {
+      id: '/_app/maintenance/$maintenanceId/edit'
+      path: '/edit'
+      fullPath: '/maintenance/$maintenanceId/edit'
+      preLoaderRoute: typeof AppMaintenanceMaintenanceIdEditRouteImport
+      parentRoute: typeof AppMaintenanceMaintenanceIdRoute
+    }
     '/_app/drivers/$driverId/licenses': {
       id: '/_app/drivers/$driverId/licenses'
       path: '/licenses'
@@ -546,6 +660,39 @@ const AppDriversRouteChildren: AppDriversRouteChildren = {
 
 const AppDriversRouteWithChildren = AppDriversRoute._addFileChildren(
   AppDriversRouteChildren,
+)
+
+interface AppMaintenanceMaintenanceIdRouteChildren {
+  AppMaintenanceMaintenanceIdEditRoute: typeof AppMaintenanceMaintenanceIdEditRoute
+}
+
+const AppMaintenanceMaintenanceIdRouteChildren: AppMaintenanceMaintenanceIdRouteChildren =
+  {
+    AppMaintenanceMaintenanceIdEditRoute: AppMaintenanceMaintenanceIdEditRoute,
+  }
+
+const AppMaintenanceMaintenanceIdRouteWithChildren =
+  AppMaintenanceMaintenanceIdRoute._addFileChildren(
+    AppMaintenanceMaintenanceIdRouteChildren,
+  )
+
+interface AppMaintenanceRouteChildren {
+  AppMaintenanceMaintenanceIdRoute: typeof AppMaintenanceMaintenanceIdRouteWithChildren
+  AppMaintenanceNewRoute: typeof AppMaintenanceNewRoute
+  AppMaintenanceScheduleRoute: typeof AppMaintenanceScheduleRoute
+  AppMaintenanceIndexRoute: typeof AppMaintenanceIndexRoute
+}
+
+const AppMaintenanceRouteChildren: AppMaintenanceRouteChildren = {
+  AppMaintenanceMaintenanceIdRoute:
+    AppMaintenanceMaintenanceIdRouteWithChildren,
+  AppMaintenanceNewRoute: AppMaintenanceNewRoute,
+  AppMaintenanceScheduleRoute: AppMaintenanceScheduleRoute,
+  AppMaintenanceIndexRoute: AppMaintenanceIndexRoute,
+}
+
+const AppMaintenanceRouteWithChildren = AppMaintenanceRoute._addFileChildren(
+  AppMaintenanceRouteChildren,
 )
 
 interface AppTripsTripIdRouteChildren {
@@ -614,6 +761,7 @@ const AppVehiclesRouteWithChildren = AppVehiclesRoute._addFileChildren(
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDriversRoute: typeof AppDriversRouteWithChildren
+  AppMaintenanceRoute: typeof AppMaintenanceRouteWithChildren
   AppTripsRoute: typeof AppTripsRouteWithChildren
   AppVehiclesRoute: typeof AppVehiclesRouteWithChildren
 }
@@ -621,6 +769,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDriversRoute: AppDriversRouteWithChildren,
+  AppMaintenanceRoute: AppMaintenanceRouteWithChildren,
   AppTripsRoute: AppTripsRouteWithChildren,
   AppVehiclesRoute: AppVehiclesRouteWithChildren,
 }
