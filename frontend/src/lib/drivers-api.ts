@@ -93,6 +93,11 @@ export const driversApi = {
     return normalizeDriver(res.data);
   },
 
+  updateMyStatus: async (status: DriverStatus) => {
+    const res = await api.patch<ApiResponse<ApiDriver>>("/drivers/me/status", { status });
+    return normalizeDriver(res.data);
+  },
+
   getAvailable: async () => {
     const res = await api.get<ApiResponse<ApiDriver[]>>("/drivers/available");
     return res.data.map(normalizeDriver);

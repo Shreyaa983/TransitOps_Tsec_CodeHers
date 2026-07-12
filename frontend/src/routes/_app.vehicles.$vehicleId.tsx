@@ -1,7 +1,9 @@
-import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader, EmptyState } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { useTransitStore } from "@/lib/store";
+import { vehiclesApi } from "@/lib/vehicles-api";
 import { Button } from "@/components/ui/button";
 import { money, km, kg, shortDate } from "@/lib/format";
 import { Pencil, FileText, ArrowLeft } from "lucide-react";
@@ -13,29 +15,41 @@ export const Route = createFileRoute("/_app/vehicles/$vehicleId")({
 
 function VehicleDetail() {
   const { vehicleId } = useParams({ from: "/_app/vehicles/$vehicleId" });
-  const { vehicles, trips, drivers, maintenance, fuel, expenses } = useTransitStore();
-  const v = vehicles.find((x) => x.id === vehicleId);
-  const nav = useNavigate();
+  const { trips, drivers, maintenance, fuel, expenses } = useTransitStore();
 
-  if (!v) return <EmptyState title="Vehicle not found" description="It may have been removed from the fleet." action={<Link to="/vehicles"><Button className="brutal-btn">Back to vehicles</Button></Link>} />;
+  const { data: vehicle, isLoading, isError } = useQuery({
+    queryKey: ["vehicles", vehicleId],
+    queryFn: () => vehiclesApi.getOne(vehicleId),
+  });
 
-  const vehicleTrips = trips.filter((t) => t.vehicleId === v.id).slice(0, 6);
-  const vehicleMx = maintenance.filter((m) => m.vehicleId === v.id);
-  const vehicleFuel = fuel.filter((f) => f.vehicleId === v.id);
-  const vehicleExp = expenses.filter((e) => e.vehicleId === v.id);
-  const currentTrip = trips.find((t) => t.vehicleId === v.id && t.status === "dispatched");
+  if (isLoading) return <div className="text-sm text-muted-foreground">Loading vehicle…</div>;
+  if (isError || !vehicle) {
+    return (
+      <EmptyState
+        title="Vehicle not found"
+        description="It may have been removed from the fleet."
+        action={<Link to="/vehicles"><Button className="brutal-btn">Back to vehicles</Button></Link>}
+      />
+    );
+  }
+
+  const vehicleTrips = trips.filter((t) => t.vehicleId === vehicle.id).slice(0, 6);
+  const vehicleMx = maintenance.filter((m) => m.vehicleId === vehicle.id);
+  const vehicleFuel = fuel.filter((f) => f.vehicleId === vehicle.id);
+  const vehicleExp = expenses.filter((e) => e.vehicleId === vehicle.id);
+  const currentTrip = trips.find((t) => t.vehicleId === vehicle.id && t.status === "dispatched");
   const assignedDriver = currentTrip ? drivers.find((d) => d.id === currentTrip.driverId) : null;
 
   return (
     <div>
       <PageHeader
-        title={`${v.name} · ${v.registration}`}
-        subtitle={`${v.model} · ${v.type}`}
+        title={`${vehicle.name} · ${vehicle.registrationNumber}`}
+        subtitle={`${vehicle.model} · ${vehicle.type}`}
         actions={
           <div className="flex gap-2">
             <Link to="/vehicles" className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><ArrowLeft className="h-4 w-4" /> Back</Link>
-            <Link to="/vehicles/$vehicleId/documents" params={{ vehicleId: v.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><FileText className="h-4 w-4" /> Documents</Link>
-            <Link to="/vehicles/$vehicleId/edit" params={{ vehicleId: v.id }} className="brutal-btn px-3 py-2 bg-primary text-primary-foreground inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
+            <Link to="/vehicles/$vehicleId/documents" params={{ vehicleId: vehicle.id }} className="brutal-btn px-3 py-2 bg-card inline-flex items-center gap-1"><FileText className="h-4 w-4" /> Documents</Link>
+            <Link to="/vehicles/$vehicleId/edit" params={{ vehicleId: vehicle.id }} className="brutal-btn px-3 py-2 bg-primary text-primary-foreground inline-flex items-center gap-1"><Pencil className="h-4 w-4" /> Edit</Link>
           </div>
         }
       />
@@ -44,12 +58,12 @@ function VehicleDetail() {
         <div className="brutal-card p-5 lg:col-span-2">
           <h3 className="font-bold mb-3">Overview</h3>
           <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            <Info label="Status"><StatusBadge status={v.status} /></Info>
-            <Info label="Capacity">{kg(v.capacityKg)}</Info>
-            <Info label="Odometer">{km(v.odometerKm)}</Info>
-            <Info label="Fuel type">{v.fuelType}</Info>
-            <Info label="Acquisition cost">{money(v.acquisitionCost)}</Info>
-            <Info label="Type">{v.type}</Info>
+            <Info label="Status"><StatusBadge status={vehicle.status} /></Info>
+            <Info label="Max load capacity">{kg(vehicle.maxLoadCapacity)}</Info>
+            <Info label="Odometer">{km(vehicle.odometer)}</Info>
+            <Info label="Acquisition cost">{money(vehicle.acquisitionCost)}</Info>
+            <Info label="Type">{vehicle.type}</Info>
+            <Info label="Model">{vehicle.model}</Info>
           </dl>
         </div>
         <div className="brutal-card p-5">

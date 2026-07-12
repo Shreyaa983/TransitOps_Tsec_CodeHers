@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { VehicleStatus, TripStatus, MaintenanceStatus } from "@/lib/mock-data";
 
-type Kind = VehicleStatus | TripStatus | MaintenanceStatus | "on_duty" | "off_duty" | "suspended" | "AVAILABLE" | "ON_TRIP" | "OFF_DUTY" | "SUSPENDED";
+type Kind = VehicleStatus | TripStatus | MaintenanceStatus | "on_duty" | "off_duty" | "suspended" | "AVAILABLE" | "ON_TRIP" | "IN_SHOP" | "RETIRED" | "OFF_DUTY" | "SUSPENDED";
 
 const styles: Record<string, string> = {
   available: "bg-success/15 text-success border-success/40",
@@ -19,6 +19,8 @@ const styles: Record<string, string> = {
   suspended: "bg-destructive/15 text-destructive border-destructive/40",
   AVAILABLE: "bg-success/15 text-success border-success/40",
   ON_TRIP: "bg-primary/15 text-primary border-primary/40",
+  IN_SHOP: "bg-warning/15 text-warning border-warning/40",
+  RETIRED: "bg-muted text-muted-foreground border-border-soft",
   OFF_DUTY: "bg-muted text-muted-foreground border-border-soft",
   SUSPENDED: "bg-destructive/15 text-destructive border-destructive/40",
 };
@@ -39,6 +41,8 @@ const labels: Record<string, string> = {
   suspended: "Suspended",
   AVAILABLE: "Available",
   ON_TRIP: "On Trip",
+  IN_SHOP: "In Shop",
+  RETIRED: "Retired",
   OFF_DUTY: "Off Duty",
   SUSPENDED: "Suspended",
 };
