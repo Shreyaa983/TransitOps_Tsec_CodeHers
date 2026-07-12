@@ -1,12 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Truck, CheckCircle2, Wrench, Route as RouteIcon, Clock, Users, Activity, TrendingUp, AlertTriangle, Sparkles, Fuel } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import { useTransitStore, useAuth, type AuthUser } from "@/lib/store";
+import { driversApi, type DriverStatus } from "@/lib/drivers-api";
 import { PageHeader } from "@/components/ui-bits";
 import { StatusBadge } from "@/components/status-badge";
 import { daysUntil, money } from "@/lib/format";
 import { toast } from "sonner";
+
+const DRIVER_STATUS_OPTIONS: { value: DriverStatus; label: string }[] = [
+  { value: "AVAILABLE", label: "Available" },
+  { value: "ON_TRIP", label: "On Trip" },
+  { value: "OFF_DUTY", label: "Off Duty" },
+];
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TransitOps" }] }),
@@ -257,18 +265,33 @@ function DashboardPage() {
 }
 
 function DriverConsole({ user }: { user: AuthUser }) {
-  const { drivers, vehicles, trips, updateDriverStatus } = useTransitStore();
-  const driver = drivers.find((d) => d.id === user.driverId) ?? drivers.find((d) => d.name.toLowerCase() === user.name.toLowerCase());
-  const myTrips = trips.filter((t) => t.driverId === driver?.id || (driver && t.code.includes(driver.name)));
+  const { vehicles, trips } = useTransitStore();
+  const qc = useQueryClient();
+
+  const { data: driver, isLoading } = useQuery({
+    queryKey: ["drivers", "me", user.driverId],
+    queryFn: () => driversApi.getOne(user.driverId!),
+    enabled: !!user.driverId,
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: (status: DriverStatus) => driversApi.updateMyStatus(status),
+    onSuccess: (updated) => {
+      qc.setQueryData(["drivers", "me", user.driverId], updated);
+      if (user.driverId) qc.setQueryData(["drivers", user.driverId], updated);
+      qc.invalidateQueries({ queryKey: ["drivers"] });
+      toast.success(`Status updated to ${updated.status.replace("_", " ")}`);
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to update status"),
+  });
+
+  const myTrips = trips.filter((t) => t.driverId === driver?.id);
   const currentTrip = myTrips.find((t) => t.status === "dispatched" || t.status === "draft");
   const assignedVehicle = vehicles.find((v) => v.id === currentTrip?.vehicleId || v.status === "on_trip");
 
-  const handleStatusChange = async (newStatus: any) => {
-    if (!driver) return toast.error("Driver profile not linked.");
-    const res = await updateDriverStatus(driver.id, newStatus);
-    if (res.ok) toast.success(`Status updated to ${newStatus.replace("_", " ")}`);
-    else toast.error(res.error || "Failed to update status");
-  };
+  if (isLoading) {
+    return <div className="text-sm text-muted-foreground">Loading your driver profile…</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -284,24 +307,26 @@ function DriverConsole({ user }: { user: AuthUser }) {
                 {driver && <StatusBadge status={driver.status} />}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                License: <span className="font-mono font-semibold text-foreground">{driver?.licenseNumber ?? "DL-ACTIVE"}</span> · Category: <span className="font-semibold text-foreground">{driver?.category ?? "Heavy Goods"}</span>
+                License: <span className="font-mono font-semibold text-foreground">{driver?.licenseNumber ?? "—"}</span> · Category: <span className="font-semibold text-foreground">{driver?.category ?? "—"}</span>
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-bold text-muted-foreground mr-1">Update My Status:</span>
-            {(["available", "on_trip", "off_duty"] as const).map((s) => (
+            {DRIVER_STATUS_OPTIONS.map(({ value, label }) => (
               <button
-                key={s}
-                onClick={() => handleStatusChange(s)}
+                key={value}
+                type="button"
+                disabled={!driver || statusMutation.isPending}
+                onClick={() => statusMutation.mutate(value)}
                 className={`brutal-btn px-3 py-1.5 text-xs font-bold transition-all ${
-                  driver?.status === s || driver?.status === s.toUpperCase()
+                  driver?.status === value
                     ? "bg-primary text-primary-foreground brutal-shadow-sm scale-105"
                     : "bg-card hover:bg-accent"
                 }`}
               >
-                {s === "available" ? "Available" : s === "on_trip" ? "On Trip" : "Off Duty"}
+                {label}
               </button>
             ))}
           </div>

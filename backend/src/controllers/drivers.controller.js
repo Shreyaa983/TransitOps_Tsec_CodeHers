@@ -43,36 +43,29 @@ const updateStatus = asyncHandler(async (req, res) => {
 
 // PATCH /drivers/me/status
 const updateMyStatus = asyncHandler(async (req, res) => {
-    let driver = req.user.driver;
-
-    if (!driver) {
-        driver = await Driver.findOne({
-            user: req.user._id,
-        });
-
-        if (!driver) {
-            return res.status(404).json({
-                success: false,
-                message: "No driver profile linked to this user",
-            });
-        }
-    }
-
     const { status } = req.body;
 
-    const allowed = [
-        "AVAILABLE",
-        "ON_TRIP",
-        "OFF_DUTY",
-        "SUSPENDED",
-    ];
-
+    const allowed = ["AVAILABLE", "ON_TRIP", "OFF_DUTY", "SUSPENDED"];
     const normalized = status?.toUpperCase();
 
     if (!allowed.includes(normalized)) {
         return res.status(400).json({
             success: false,
             message: "Invalid driver status",
+        });
+    }
+
+    const driverId = req.user.driver?._id ?? req.user.driver;
+    let driver = driverId ? await Driver.findById(driverId) : null;
+
+    if (!driver) {
+        driver = await Driver.findOne({ user: req.user._id });
+    }
+
+    if (!driver) {
+        return res.status(404).json({
+            success: false,
+            message: "No driver profile linked to this user",
         });
     }
 

@@ -4,6 +4,7 @@ import {
   seedVehicles, seedDrivers, seedTrips, seedMaintenance, seedFuel, seedExpenses, seedNotifications,
   type Vehicle, type Driver, type Trip, type MaintenanceLog, type FuelLog, type Expense, type Notification,
 } from "./mock-data";
+import { api } from "./api";
 
 type State = {
   vehicles: Vehicle[];
